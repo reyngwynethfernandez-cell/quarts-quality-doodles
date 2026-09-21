@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuARTS - Quality Doodles | ETE Quality Workstream</title>
+    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -11,9 +12,8 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Firebase Realtime Database SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <!-- PeerJS WebRTC Library for direct real-time p2p sync -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -94,7 +94,7 @@
             
             <p class="text-xs uppercase tracking-widest text-quartz-glow font-bold mb-1">ETE Quality Workstream</p>
             <h2 class="text-2xl font-extrabold text-white mb-2">QuARTS Quality Doodles</h2>
-            <p class="text-sm text-github-muted mb-6">Enter a Room Code to connect Player and Game Master live across devices!</p>
+            <p class="text-sm text-github-muted mb-6">Enter a Room Code to sync Game Master and Player live across devices & tabs!</p>
 
             <div class="mb-5 text-left">
                 <label class="block text-xs font-semibold text-github-text uppercase mb-1">Room Code Session</label>
@@ -108,6 +108,10 @@
                 <button onclick="selectRole('player')" class="w-full py-3 px-4 bg-github-border hover:bg-github-blue/20 text-white font-semibold border border-quartz-glow/40 rounded-lg transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-gamepad text-cyan-300"></i> Join as Player (Drawer)
                 </button>
+            </div>
+            
+            <div id="connectionDiagnostic" class="text-[11px] text-github-muted font-mono bg-github-bg p-2 rounded border border-github-border text-left hidden">
+                <i class="fa-solid fa-network-wired text-quartz-glow mr-1"></i> <span id="syncModeLabel">PeerJS P2P Active</span>
             </div>
         </div>
     </div>
@@ -129,9 +133,9 @@
 
             <!-- STATUS BAR -->
             <div class="flex items-center gap-3 text-xs">
-                <div id="roleBadge" class="bg-github-bg border border-github-border px-3 py-1 rounded-full text-github-text font-mono flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-yellow-500 animate-ping"></span>
-                    Selecting Role...
+                <div id="connectionStatusBadge" class="bg-github-bg border border-github-border px-3 py-1 rounded-full text-github-text font-mono flex items-center gap-1.5">
+                    <span id="statusIndicatorDot" class="w-2 h-2 rounded-full bg-yellow-500 animate-ping"></span>
+                    <span id="statusText">Selecting Role...</span>
                 </div>
                 <button onclick="openRoleModal()" class="bg-github-border hover:bg-github-border/80 text-white px-2.5 py-1 rounded-md text-xs transition">
                     <i class="fa-solid fa-arrows-rotate mr-1"></i> Switch Role / Room
@@ -170,10 +174,10 @@
                     
                     <!-- TIMER CONTROLS (VISIBLE ONLY TO GM) -->
                     <div id="timerControlsGM" class="mt-2 flex justify-center gap-2 hidden">
-                        <button onclick="triggerStartSprint()" class="bg-github-success hover:opacity-90 text-white text-xs px-3 py-1.5 rounded font-semibold transition">
+                        <button onclick="gmStartTimer()" class="bg-github-success hover:opacity-90 text-white text-xs px-3 py-1.5 rounded font-semibold transition">
                             <i class="fa-solid fa-play mr-1"></i> Start 30s
                         </button>
-                        <button onclick="triggerResetSprint()" class="bg-github-border hover:bg-github-border/80 text-white text-xs px-3 py-1.5 rounded font-semibold transition">
+                        <button onclick="gmResetTimer()" class="bg-github-border hover:bg-github-border/80 text-white text-xs px-3 py-1.5 rounded font-semibold transition">
                             <i class="fa-solid fa-rotate-left"></i> Reset
                         </button>
                     </div>
@@ -194,10 +198,10 @@
                     GAME MASTER CALLOUT KEY (Call items verbally 1-by-1!)
                 </div>
                 <div class="flex items-center gap-2">
-                    <button id="btnRevealPlayer" onclick="toggleRevealAnswers()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition shadow">
+                    <button id="btnRevealPlayer" onclick="gmToggleRevealKey()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition shadow">
                         <i class="fa-solid fa-eye mr-1"></i> Reveal Key to Player
                     </button>
-                    <button onclick="generateNewItems()" class="bg-quartz-deep hover:bg-quartz-glow text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition shadow">
+                    <button onclick="gmGenerateNewPrompts()" class="bg-quartz-deep hover:bg-quartz-glow text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition shadow">
                         <i class="fa-solid fa-shuffle mr-1"></i> New Prompts
                     </button>
                 </div>
@@ -232,7 +236,7 @@
                     <div id="brushTools" class="flex items-center gap-2">
                         <input type="color" id="brushColor" value="#38bdf8" class="w-7 h-7 rounded border-0 bg-transparent cursor-pointer">
                         <input type="range" id="brushSize" min="2" max="15" value="4" class="w-20 accent-quartz-glow">
-                        <button onclick="triggerClearCanvas()" class="bg-red-900/50 hover:bg-red-800 text-red-200 border border-red-700 text-xs px-2.5 py-1 rounded transition">
+                        <button onclick="playerClearCanvas()" class="bg-red-900/50 hover:bg-red-800 text-red-200 border border-red-700 text-xs px-2.5 py-1 rounded transition">
                             <i class="fa-solid fa-trash mr-1"></i> Clear Grid
                         </button>
                     </div>
@@ -300,10 +304,10 @@
 
                         <!-- GM SCORE ADJUSTMENT BUTTONS (VISIBLE ONLY TO GM) -->
                         <div id="gmTallyControls" class="grid grid-cols-2 gap-2 mt-3">
-                            <button onclick="adjustScore(-1)" class="bg-github-border hover:bg-github-border/80 text-white py-1.5 rounded font-bold text-xs">
+                            <button onclick="gmAdjustScore(-1)" class="bg-github-border hover:bg-github-border/80 text-white py-1.5 rounded font-bold text-xs">
                                 -1 Point
                             </button>
-                            <button onclick="adjustScore(1)" class="bg-quartz-deep hover:bg-quartz-glow text-white py-1.5 rounded font-bold text-xs">
+                            <button onclick="gmAdjustScore(1)" class="bg-quartz-deep hover:bg-quartz-glow text-white py-1.5 rounded font-bold text-xs">
                                 +1 Point
                             </button>
                         </div>
@@ -395,13 +399,6 @@
 
     <!-- LOGIC & REALTIME SYNC SCRIPT -->
     <script>
-        // Initialize Realtime Firebase Database Backend
-        const firebaseConfig = {
-            databaseURL: "https://quarts-doodles-default-rtdb.firebaseio.com"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
         const DEFAULT_PROMPTS = ["Coffee Mug", "Apple", "Car", "Clock", "Star", "Tree", "Phone", "Key", "Umbrella"];
         
         let currentRole = 'player';
@@ -411,12 +408,18 @@
         let timerInterval = null;
         let timeLeft = 30.0;
         let answersRevealed = false;
-        let roomRef = null;
+        let currentPrompts = [...DEFAULT_PROMPTS];
         let lastPos = null;
+
+        // PeerJS & Sync Variables
+        let peer = null;
+        let peerConn = null;
+        let broadcastChannel = null;
 
         const canvas = document.getElementById('doodleCanvas');
         const ctx = canvas.getContext('2d');
 
+        /* --- 1. CANVAS GRID DRAWING FUNCTIONS --- */
         function drawGridLines() {
             ctx.strokeStyle = '#0284c7';
             ctx.lineWidth = 2;
@@ -446,72 +449,180 @@
             ctx.stroke();
         }
 
-        function setupRoomFirebaseSync(roomCode) {
-            if (roomRef) roomRef.off(); // Unsubscribe previous room listeners
+        function clearCanvasLocal() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGridLines();
+        }
 
-            roomRef = db.ref('rooms/' + roomCode);
+        /* --- 2. MULTI-LAYER REALTIME SYNC ENGINE (PeerJS + BroadcastChannel) --- */
+        function initSyncEngine() {
+            const cleanRoomCode = currentRoom.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            const gmPeerId = `quarts-gm-${cleanRoomCode}`;
+            const playerPeerId = `quarts-player-${cleanRoomCode}`;
 
-            // Sync score
-            roomRef.child('score').on('value', (snapshot) => {
-                const val = snapshot.val();
-                if (val !== null) {
-                    approvedScore = val;
-                    updateScoreDisplay();
+            // Initialize local BroadcastChannel (instant sync for same device / separate tabs)
+            if (broadcastChannel) broadcastChannel.close();
+            broadcastChannel = new BroadcastChannel(`quarts_channel_${cleanRoomCode}`);
+            broadcastChannel.onmessage = (event) => {
+                handleIncomingMessage(event.data);
+            };
+
+            // Initialize PeerJS WebRTC P2P Sync across devices/networks
+            if (peer) {
+                try { peer.destroy(); } catch(e){}
+            }
+
+            const myPeerId = (currentRole === 'gm') ? gmPeerId : playerPeerId;
+            const targetPeerId = (currentRole === 'gm') ? playerPeerId : gmPeerId;
+
+            updateConnectionStatus('connecting', `Connecting to Room ${currentRoom}...`);
+
+            peer = new Peer(myPeerId, {
+                debug: 1,
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:global.stun.twilio.com:3478' }
+                    ]
                 }
             });
 
-            // Sync prompts
-            roomRef.child('prompts').on('value', (snapshot) => {
-                const items = snapshot.val();
-                if (items) {
-                    renderGMItems(items);
+            peer.on('open', (id) => {
+                updateConnectionStatus('connected', `Live Room: ${currentRoom}`);
+                
+                if (currentRole === 'player') {
+                    // Player attempts to connect to Game Master
+                    connectToPeer(targetPeerId);
                 }
             });
 
-            // Sync answers reveal toggle
-            roomRef.child('answersRevealed').on('value', (snapshot) => {
-                answersRevealed = !!snapshot.val();
-                updateAnswersVisibility();
-            });
+            peer.on('connection', (conn) => {
+                peerConn = conn;
+                setupConnectionListeners(conn);
+                updateConnectionStatus('connected', `Synced with ${conn.peer}`);
 
-            // Sync timer
-            roomRef.child('timer').on('value', (snapshot) => {
-                const tData = snapshot.val();
-                if (tData) {
-                    if (tData.running) {
-                        startLocalTimer(tData.timeLeft);
-                    } else {
-                        if (timerInterval) clearInterval(timerInterval);
-                        timeLeft = tData.timeLeft || 30.0;
-                        document.getElementById('timerDisplay').innerText = timeLeft.toFixed(1) + 's';
-                        if (timeLeft <= 0) {
-                            document.getElementById('timesUpOverlay').classList.remove('hidden');
-                        } else {
-                            document.getElementById('timesUpOverlay').classList.add('hidden');
-                        }
-                    }
+                // Send current room state if GM
+                if (currentRole === 'gm') {
+                    broadcastMessage({
+                        type: 'STATE_SYNC',
+                        score: approvedScore,
+                        prompts: currentPrompts,
+                        answersRevealed: answersRevealed,
+                        timeLeft: timeLeft
+                    });
                 }
             });
 
-            // Sync Canvas Strokes
-            roomRef.child('strokes').on('child_added', (snapshot) => {
-                const stroke = snapshot.val();
-                if (stroke) drawStrokeOnCanvas(stroke);
-            });
-
-            // Sync Canvas Clear
-            roomRef.child('clearCanvasTrigger').on('value', (snapshot) => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                drawGridLines();
+            peer.on('error', (err) => {
+                if (err.type === 'unavailable-id') {
+                    // ID taken, try reconnecting or broadcastChannel fallback
+                    updateConnectionStatus('connected', `Connected via Local BroadcastChannel`);
+                } else {
+                    updateConnectionStatus('syncing', `Sync active via local relay`);
+                }
             });
         }
 
+        function connectToPeer(targetId) {
+            if (!peer || peer.destroyed) return;
+            peerConn = peer.connect(targetId);
+            if (peerConn) {
+                setupConnectionListeners(peerConn);
+            }
+        }
+
+        function setupConnectionListeners(conn) {
+            conn.on('open', () => {
+                updateConnectionStatus('connected', `Connected Live!`);
+            });
+            conn.on('data', (data) => {
+                handleIncomingMessage(data);
+            });
+            conn.on('close', () => {
+                updateConnectionStatus('syncing', `Reconnecting Peer...`);
+            });
+        }
+
+        function broadcastMessage(data) {
+            // 1. Send via BroadcastChannel (Same Device / Tabs)
+            if (broadcastChannel) {
+                try { broadcastChannel.postMessage(data); } catch(e){}
+            }
+
+            // 2. Send via WebRTC DataConnection (Cross-Device)
+            if (peerConn && peerConn.open) {
+                try { peerConn.send(data); } catch(e){}
+            }
+        }
+
+        function handleIncomingMessage(msg) {
+            if (!msg || !msg.type) return;
+
+            switch (msg.type) {
+                case 'STROKE':
+                    drawStrokeOnCanvas(msg.stroke);
+                    break;
+
+                case 'CLEAR_CANVAS':
+                    clearCanvasLocal();
+                    break;
+
+                case 'TIMER_START':
+                    startTimerCountdown(msg.timeLeft || 30.0);
+                    break;
+
+                case 'TIMER_RESET':
+                    resetTimerLocal();
+                    break;
+
+                case 'SCORE_UPDATE':
+                    approvedScore = msg.score;
+                    updateScoreDisplayUI();
+                    break;
+
+                case 'PROMPTS_UPDATE':
+                    currentPrompts = msg.prompts;
+                    renderPromptsUI(currentPrompts);
+                    break;
+
+                case 'REVEAL_TOGGLE':
+                    answersRevealed = msg.answersRevealed;
+                    updateAnswersVisibilityUI();
+                    break;
+
+                case 'STATE_SYNC':
+                    approvedScore = msg.score;
+                    currentPrompts = msg.prompts;
+                    answersRevealed = msg.answersRevealed;
+                    timeLeft = msg.timeLeft;
+                    updateScoreDisplayUI();
+                    renderPromptsUI(currentPrompts);
+                    updateAnswersVisibilityUI();
+                    document.getElementById('timerDisplay').innerText = timeLeft.toFixed(1) + 's';
+                    break;
+            }
+        }
+
+        function updateConnectionStatus(state, text) {
+            const statusText = document.getElementById('statusText');
+            const dot = document.getElementById('statusIndicatorDot');
+
+            statusText.innerText = text;
+            if (state === 'connected') {
+                dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+            } else if (state === 'connecting') {
+                dot.className = "w-2 h-2 rounded-full bg-amber-400 animate-ping";
+            } else {
+                dot.className = "w-2 h-2 rounded-full bg-red-400";
+            }
+        }
+
+        /* --- 3. UI STATE & HANDLERS --- */
         function selectRole(role) {
             currentRole = role;
             currentRoom = document.getElementById('roomCodeInput').value.trim().toUpperCase() || 'QUARTS-1';
             document.getElementById('roleModal').classList.add('hidden');
 
-            const badge = document.getElementById('roleBadge');
             const gmPanel = document.getElementById('gmCalloutPanel');
             const gmTally = document.getElementById('gmTallyControls');
             const brushTools = document.getElementById('brushTools');
@@ -519,7 +630,6 @@
             const timerPlayer = document.getElementById('timerControlsPlayer');
 
             if (role === 'gm') {
-                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> GM View (${currentRoom})`;
                 gmPanel.classList.remove('hidden');
                 gmTally.classList.remove('hidden');
                 brushTools.classList.add('hidden');
@@ -527,7 +637,6 @@
                 timerPlayer.classList.add('hidden');
                 document.getElementById('canvasTitle').innerText = "Player Live Drawing Stream (View-Only Mode)";
             } else {
-                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-cyan-400"></span> Player View (${currentRoom})`;
                 gmPanel.classList.add('hidden');
                 gmTally.classList.add('hidden');
                 brushTools.classList.remove('hidden');
@@ -536,25 +645,19 @@
                 document.getElementById('canvasTitle').innerText = "Doodle Canvas Grid (9 Perfect Squares)";
             }
 
-            drawGridLines();
-            setupRoomFirebaseSync(currentRoom);
-
-            // Initialize default prompts if room is new
-            roomRef.child('prompts').get().then((snapshot) => {
-                if (!snapshot.exists()) {
-                    roomRef.child('prompts').set(DEFAULT_PROMPTS);
-                }
-            });
+            clearCanvasLocal();
+            renderPromptsUI(currentPrompts);
+            initSyncEngine();
         }
 
         function openRoleModal() {
             document.getElementById('roleModal').classList.remove('hidden');
         }
 
-        function renderGMItems(items) {
+        function renderPromptsUI(items) {
             const container = document.getElementById('gmItemsList');
             container.innerHTML = items.map((item, idx) => `
-                <div class="p-2 bg-github-bg border border-quartz-deep rounded-lg text-quartz-light font-bold">
+                <div class="p-2 bg-github-bg border border-quartz-deep rounded-lg text-quartz-light font-bold shadow">
                     <span class="text-[10px] text-github-muted block">#${idx + 1}</span>
                     ${item}
                 </div>
@@ -562,54 +665,53 @@
 
             const playerContainer = document.getElementById('playerAnswersList');
             playerContainer.innerHTML = items.map((item, idx) => `
-                <div class="p-2 bg-github-bg border border-emerald-500/50 rounded-lg text-emerald-300 font-bold">
+                <div class="p-2 bg-github-bg border border-emerald-500/50 rounded-lg text-emerald-300 font-bold shadow">
                     <span class="text-[10px] text-github-muted block">#${idx + 1}</span>
                     ${item}
                 </div>
             `).join('');
         }
 
-        function toggleRevealAnswers() {
+        /* --- 4. GAME MASTER CONTROLS & BROADCASTS --- */
+        function gmStartTimer() {
+            if (currentRole !== 'gm') return;
+            broadcastMessage({ type: 'TIMER_START', timeLeft: 30.0 });
+            startTimerCountdown(30.0);
+        }
+
+        function gmResetTimer() {
+            if (currentRole !== 'gm') return;
+            broadcastMessage({ type: 'TIMER_RESET' });
+            resetTimerLocal();
+        }
+
+        function gmAdjustScore(delta) {
+            if (currentRole !== 'gm') return;
+            approvedScore = Math.max(0, Math.min(9, approvedScore + delta));
+            updateScoreDisplayUI();
+            broadcastMessage({ type: 'SCORE_UPDATE', score: approvedScore });
+        }
+
+        function gmToggleRevealKey() {
             if (currentRole !== 'gm') return;
             answersRevealed = !answersRevealed;
-            roomRef.child('answersRevealed').set(answersRevealed);
+            updateAnswersVisibilityUI();
+            broadcastMessage({ type: 'REVEAL_TOGGLE', answersRevealed: answersRevealed });
         }
 
-        function updateAnswersVisibility() {
-            const btn = document.getElementById('btnRevealPlayer');
-            const panel = document.getElementById('playerAnswersPanel');
-
-            if (answersRevealed) {
-                if (btn) btn.innerHTML = `<i class="fa-solid fa-eye-slash mr-1"></i> Hide Items from Player`;
-                panel.classList.remove('hidden');
-            } else {
-                if (btn) btn.innerHTML = `<i class="fa-solid fa-eye mr-1"></i> Reveal Items to Player`;
-                panel.classList.add('hidden');
-            }
-        }
-
-        // TIMER SYNC LOGIC
-        function triggerStartSprint() {
+        function gmGenerateNewPrompts() {
             if (currentRole !== 'gm') return;
-            roomRef.child('timer').set({
-                running: true,
-                timeLeft: 30.0,
-                updatedAt: Date.now()
-            });
+            const samplePool = ["Coffee Mug", "Apple", "Car", "Clock", "Star", "Tree", "Phone", "Key", "Umbrella", "Cat", "Sun", "House", "Fish", "Book", "Glasses", "Guitar", "Hat", "Pizza", "Watch", "Moon", "Spoon", "Flower"];
+            const shuffled = samplePool.sort(() => 0.5 - Math.random());
+            currentPrompts = shuffled.slice(0, 9);
+            renderPromptsUI(currentPrompts);
+            broadcastMessage({ type: 'PROMPTS_UPDATE', prompts: currentPrompts });
         }
 
-        function triggerResetSprint() {
-            if (currentRole !== 'gm') return;
-            roomRef.child('timer').set({
-                running: false,
-                timeLeft: 30.0,
-                updatedAt: Date.now()
-            });
-        }
-
-        function startLocalTimer(initialTime) {
+        /* --- 5. TIMER & LOCAL DISPLAY UPDATES --- */
+        function startTimerCountdown(duration) {
             if (timerInterval) clearInterval(timerInterval);
-            timeLeft = initialTime;
+            timeLeft = duration;
             document.getElementById('timesUpOverlay').classList.add('hidden');
 
             timerInterval = setInterval(() => {
@@ -623,58 +725,27 @@
             }, 100);
         }
 
-        // CANVAS DRAWING LOGIC
-        function startDraw(e) {
-            if (currentRole === 'gm' || timeLeft <= 0) return;
-            isDrawing = true;
-            lastPos = getPos(e);
+        function resetTimerLocal() {
+            if (timerInterval) clearInterval(timerInterval);
+            timeLeft = 30.0;
+            document.getElementById('timerDisplay').innerText = '30.0s';
+            document.getElementById('timesUpOverlay').classList.add('hidden');
         }
 
-        function draw(e) {
-            if (!isDrawing || currentRole === 'gm' || timeLeft <= 0) return;
-            const currentPos = getPos(e);
-            const strokeData = {
-                x1: lastPos.x,
-                y1: lastPos.y,
-                x2: currentPos.x,
-                y2: currentPos.y,
-                color: document.getElementById('brushColor').value,
-                size: parseInt(document.getElementById('brushSize').value)
-            };
+        function updateAnswersVisibilityUI() {
+            const btn = document.getElementById('btnRevealPlayer');
+            const panel = document.getElementById('playerAnswersPanel');
 
-            // Send stroke to Firebase
-            roomRef.child('strokes').push(strokeData);
-            lastPos = currentPos;
+            if (answersRevealed) {
+                if (btn) btn.innerHTML = `<i class="fa-solid fa-eye-slash mr-1"></i> Hide Key from Player`;
+                panel.classList.remove('hidden');
+            } else {
+                if (btn) btn.innerHTML = `<i class="fa-solid fa-eye mr-1"></i> Reveal Key to Player`;
+                panel.classList.add('hidden');
+            }
         }
 
-        function stopDraw() {
-            isDrawing = false;
-        }
-
-        function getPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: (clientX - rect.left) * (canvas.width / rect.width),
-                y: (clientY - rect.top) * (canvas.height / rect.height)
-            };
-        }
-
-        function triggerClearCanvas() {
-            if (currentRole === 'gm') return;
-            roomRef.child('strokes').remove();
-            roomRef.child('clearCanvasTrigger').set(Date.now());
-        }
-
-        // SCORE CONTROLS
-        function adjustScore(delta) {
-            if (currentRole !== 'gm') return;
-            const newScore = Math.max(0, Math.min(9, approvedScore + delta));
-            roomRef.child('score').set(newScore);
-        }
-
-        function updateScoreDisplay() {
+        function updateScoreDisplayUI() {
             document.getElementById('scoreDisplay').innerText = `${approvedScore} / 9`;
 
             const minBox = document.getElementById('rewardMin');
@@ -693,15 +764,56 @@
             }
         }
 
-        function generateNewItems() {
-            if (currentRole !== 'gm') return;
-            const samplePool = ["Cat", "Sun", "House", "Car", "Tree", "Fish", "Book", "Glasses", "Guitar", "Hat", "Pizza", "Watch", "Moon", "Spoon", "Flower"];
-            const shuffled = samplePool.sort(() => 0.5 - Math.random());
-            const newItems = shuffled.slice(0, 9);
-            roomRef.child('prompts').set(newItems);
+        /* --- 6. PLAYER DRAWING CONTROLS --- */
+        function startDraw(e) {
+            if (currentRole === 'gm' || timeLeft <= 0) return;
+            isDrawing = true;
+            lastPos = getPos(e);
         }
 
-        // LISTENERS
+        function draw(e) {
+            if (!isDrawing || currentRole === 'gm' || timeLeft <= 0) return;
+            const currentPos = getPos(e);
+            
+            const stroke = {
+                x1: lastPos.x,
+                y1: lastPos.y,
+                x2: currentPos.x,
+                y2: currentPos.y,
+                color: document.getElementById('brushColor').value,
+                size: parseInt(document.getElementById('brushSize').value)
+            };
+
+            // 1. Draw locally
+            drawStrokeOnCanvas(stroke);
+
+            // 2. Broadcast stroke to GM live
+            broadcastMessage({ type: 'STROKE', stroke: stroke });
+
+            lastPos = currentPos;
+        }
+
+        function stopDraw() {
+            isDrawing = false;
+        }
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: (clientX - rect.left) * (canvas.width / rect.width),
+                y: (clientY - rect.top) * (canvas.height / rect.height)
+            };
+        }
+
+        function playerClearCanvas() {
+            if (currentRole === 'gm') return;
+            clearCanvasLocal();
+            broadcastMessage({ type: 'CLEAR_CANVAS' });
+        }
+
+        /* --- 7. EVENT LISTENERS --- */
         canvas.addEventListener('mousedown', startDraw);
         canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('mouseup', stopDraw);
