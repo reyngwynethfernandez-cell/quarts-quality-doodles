@@ -1,43 +1,46 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ETE QuARTS - Quality Doodles (Live Multiplayer Arena)</title>
+    <title>QuARTS - Quality Doodles | ETE Quality Workstream</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        quartz: {
-                            50: '#f0f7ff',
-                            100: '#e0effe',
-                            200: '#bae0fd',
-                            300: '#7cc7fb',
-                            400: '#36a8f7',
-                            500: '#0c8de9',
-                            600: '#006ec7',
-                            700: '#0258a2',
-                            800: '#064b86',
-                            900: '#0b3f6f',
-                            950: '#072849',
-                        },
-                        gh: {
+                        github: {
                             bg: '#0d1117',
                             card: '#161b22',
                             border: '#30363d',
                             text: '#c9d1d9',
                             muted: '#8b949e',
-                            header: '#010409'
+                            blue: '#58a6ff',
+                            accent: '#1f6feb',
+                            success: '#238636',
+                        },
+                        quartz: {
+                            light: '#a5f3fc',
+                            glow: '#38bdf8',
+                            deep: '#0284c7',
+                            dark: '#0c4a6e',
+                            crystal: '#e0f2fe'
                         }
                     },
                     fontFamily: {
+                        mono: ['"Fira Code"', 'monospace'],
                         sans: ['Inter', 'sans-serif'],
-                        mono: ['Fira Code', 'monospace'],
                     }
                 }
             }
@@ -45,35 +48,22 @@
     </script>
     <style>
         body {
-            background-color: #070c14;
-            background-image: 
-                radial-gradient(circle at 15% 15%, rgba(12, 141, 233, 0.18) 0%, transparent 45%),
-                radial-gradient(circle at 85% 85%, rgba(54, 168, 247, 0.12) 0%, transparent 45%),
-                linear-gradient(135deg, rgba(7, 40, 73, 0.5) 0%, rgba(13, 17, 23, 0.95) 100%);
-            background-attachment: fixed;
+            background-color: #0d1117;
             color: #c9d1d9;
+            font-family: 'Inter', sans-serif;
         }
-
-        .quartz-border {
-            border: 1px solid rgba(124, 199, 251, 0.35);
-            box-shadow: 0 0 20px rgba(12, 141, 233, 0.2), inset 0 0 15px rgba(124, 199, 251, 0.08);
-            backdrop-filter: blur(10px);
+        
+        .quartz-glow {
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
         }
-
+        
         .quartz-card {
-            background: rgba(22, 27, 34, 0.9);
-            border: 1px solid rgba(56, 139, 253, 0.3);
-            border-radius: 0.85rem;
-            position: relative;
-            overflow: hidden;
+            background: linear-gradient(135deg, rgba(22, 27, 34, 0.9) 0%, rgba(12, 74, 110, 0.2) 100%);
+            border: 1px solid #0284c7;
         }
 
-        .crystal-glow {
-            text-shadow: 0 0 14px rgba(54, 168, 247, 0.7);
-        }
-
-        .crystal-glow-amber {
-            text-shadow: 0 0 14px rgba(245, 158, 11, 0.7);
+        .diamond-clip {
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
         }
 
         canvas {
@@ -81,6 +71,7 @@
             cursor: crosshair;
         }
 
+        /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -89,805 +80,480 @@
             background: #0d1117;
         }
         ::-webkit-scrollbar-thumb {
-            background: #1f293d;
+            background: #0284c7;
             border-radius: 4px;
-            border: 1px solid #36a8f7;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #38bdf8;
         }
     </style>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-        // Firebase Configuration for Live Multi-Device Synchronization
-        const firebaseConfig = {
-            databaseURL: "https://quarts-doodles-default-rtdb.asia-southeast1.firebasedatabase.app/"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        window.db = getDatabase(app);
-        window.dbRef = ref;
-        window.dbSet = set;
-        window.dbOnValue = onValue;
-        window.dbUpdate = update;
-    </script>
 </head>
-<body class="font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-quartz-500 selection:text-white">
+<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-quartz-deep selection:text-white">
 
-    <div id="roleModal" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="max-w-md w-full quartz-card p-6 sm:p-8 border border-quartz-400/50 shadow-2xl space-y-6 text-center">
+    <!-- ROLE & ROOM MODAL -->
+    <div id="roleModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+        <div class="bg-github-card border-2 border-quartz-glow rounded-xl max-w-md w-full p-6 text-center shadow-2xl quartz-glow">
+            <div class="w-16 h-16 mx-auto mb-3 bg-quartz-dark/50 border border-quartz-glow rounded-full flex items-center justify-center text-quartz-glow text-2xl animate-pulse">
+                <i class="fa-solid font-bold fa-gem"></i>
+            </div>
             
-            <div class="w-16 h-16 mx-auto rounded-full bg-quartz-500/20 border-2 border-quartz-400 flex items-center justify-center text-quartz-300 text-3xl shadow-lg shadow-quartz-500/30">
-                <i class="fa-solid fa-gem animate-pulse"></i>
+            <p class="text-xs uppercase tracking-widest text-quartz-glow font-bold mb-1">ETE Quality Workstream</p>
+            <h2 class="text-2xl font-extrabold text-white mb-2">QuARTS Quality Doodles</h2>
+            <p class="text-sm text-github-muted mb-6">Select your session role to connect real-time across devices!</p>
+
+            <div class="mb-5 text-left">
+                <label class="block text-xs font-semibold text-github-text uppercase mb-1">Room Code</label>
+                <input type="text" id="roomCodeInput" value="QUARTS-1" class="w-full bg-github-bg border border-github-border rounded-lg px-3 py-2 text-white font-mono text-center focus:border-quartz-glow focus:outline-none uppercase tracking-wider">
             </div>
 
-            <div>
-                <span class="text-[11px] font-mono uppercase tracking-widest text-quartz-400 font-bold">ETE Quality Workstream</span>
-                <h2 class="text-2xl font-black text-white crystal-glow mt-1">QuARTS Quality Doodles</h2>
-                <p class="text-xs text-gh-muted mt-1.5">Enter a Room Code and select your role to connect live across devices!</p>
+            <div class="grid grid-cols-1 gap-3 mb-4">
+                <button onclick="selectRole('gm')" class="w-full py-3 px-4 bg-quartz-deep hover:bg-quartz-glow text-white font-semibold rounded-lg shadow-lg transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-crown"></i> Join as Game Master
+                </button>
+                <button onclick="selectRole('player')" class="w-full py-3 px-4 bg-github-border hover:bg-github-blue/20 text-white font-semibold border border-quartz-glow/40 rounded-lg transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-gamepad"></i> Join as Player (Drawer)
+                </button>
             </div>
 
-            <!-- Room Session Input -->
-            <div class="space-y-2 text-left bg-gh-bg p-3.5 rounded-xl border border-gh-border">
-                <label class="text-xs font-mono text-quartz-300 font-bold block flex items-center gap-1.5">
-            <!-- GAME MASTER VIEW -->
-            <div id="gmView" class="hidden space-y-6">
-                <!-- GM Control Panel Header -->
-                <div class="glass-card p-6 border-indigo-500/30 border">
-                    <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
-                        <div>
-                            <div class="flex items-center space-x-2">
-                                <span class="badge badge-purple"><i class="fas fa-crown mr-1"></i> Game Master View</span>
-                                <span class="badge badge-blue" id="gmRoomDisplay">Room: -</span>
-                            </div>
-                            <h2 class="text-2xl font-bold text-slate-100 mt-1">Control Panel & Prompts Overview</h2>
-                        </div>
-                        
-                        <!-- Game Timer Controls -->
-                        <div class="flex items-center space-x-3 bg-slate-900/80 p-3 rounded-xl border border-slate-700/60">
-                            <i class="fas fa-stopwatch text-indigo-400 text-xl"></i>
-                            <span id="gmTimerDisplay" class="text-2xl font-mono font-bold text-amber-400 w-16 text-center">03:00</span>
-                            <div class="flex space-x-1">
-                                <button id="btnStartTimer" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-sm transition-all flex items-center gap-1">
-                                    <i class="fas fa-play text-xs"></i> Start
-                                </button>
-                                <button id="btnPauseTimer" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg font-bold text-sm transition-all flex items-center gap-1">
-                                    <i class="fas fa-pause text-xs"></i> Pause
-                                </button>
-                                <button id="btnResetTimer" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-bold text-sm transition-all flex items-center gap-1">
-                                    <i class="fas fa-undo text-xs"></i> Reset
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+            <div class="pt-3 border-t border-github-border">
+                <button onclick="selectRole('solo')" class="text-xs text-github-muted hover:text-quartz-light underline">
+                    <i class="fa-solid fa-user-ninja mr-1"></i> Continue in Offline / Single Device Mode
+                </button>
+            </div>
+        </div>
+    </div>
 
-                    <!-- Prominent GM Prompts Callout Box -->
-                    <div class="bg-indigo-950/60 border border-indigo-500/50 rounded-xl p-4 shadow-lg backdrop-blur-sm">
-                        <div class="flex justify-between items-center mb-3 pb-2 border-b border-indigo-500/30">
-                            <h3 class="font-bold text-indigo-300 flex items-center gap-2">
-                                <i class="fas fa-list-check text-amber-400"></i> Current Prompts List for GM (9 Items)
-                            </h3>
-                            <button id="btnRegeneratePrompts" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold text-xs transition-all flex items-center gap-1 shadow-md">
-                                <i class="fas fa-arrows-rotate"></i> Generate New Prompts
-                            </button>
-                        </div>
-                        <div id="gmMasterPromptsList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-sm">
-                            <!-- Populated dynamically via JS -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 9 Doodles Grid (GM View) -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="gmCardsGrid">
-                    <!-- Cards 1-9 generated via JavaScript -->
+    <!-- MAIN HEADER -->
+    <header class="border-b border-github-border bg-github-card sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <i class="fa-brands fa-github text-2xl text-white"></i>
+                <div class="flex items-center text-sm font-semibold">
+                    <span class="text-github-blue hover:underline cursor-pointer">reyngwynethfernandez-cell</span>
+                    <span class="mx-1 text-github-muted">/</span>
+                    <span class="text-white font-bold hover:underline cursor-pointer flex items-center gap-1.5">
+                        quarts-quality-doodles
+                        <span class="text-[10px] bg-quartz-dark text-quartz-light border border-quartz-deep px-2 py-0.5 rounded-full font-mono">Public</span>
+                    </span>
                 </div>
             </div>
 
-<script type="module">
-            <div class="flex space-x-6 text-sm font-medium border-t border-gh-border/50 pt-2 pb-0 overflow-x-auto">
-                <a href="#readme-section" class="flex items-center space-x-2 border-b-2 border-quartz-400 text-quartz-300 pb-2.5 px-1 font-semibold">
-                    <i class="fa-regular fa-file-lines"></i>
-                    <span>README.md</span>
-                </a>
-                <a href="#interactive-game" class="flex items-center space-x-2 border-b-2 border-transparent text-gh-muted hover:text-quartz-300 pb-2.5 px-1 transition">
-                    <i class="fa-solid fa-tower-broadcast text-emerald-400"></i>
-                    <span>Live Arena & Synchronization</span>
-                </a>
+            <!-- STATUS BAR -->
+            <div class="flex items-center gap-3 text-xs">
+                <div id="roleBadge" class="bg-github-bg border border-github-border px-3 py-1 rounded-full text-github-text font-mono flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-yellow-500 animate-ping"></span>
+                    Selecting Role...
+                </div>
+                <button onclick="openRoleModal()" class="bg-github-border hover:bg-github-border/80 text-white px-2.5 py-1 rounded-md text-xs transition">
+                    <i class="fa-solid fa-arrows-rotate mr-1"></i> Switch Role
+                </button>
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-grow">
+    <!-- CONTENT WRAPPER -->
+    <main class="max-w-7xl mx-auto px-4 py-6 w-full flex-grow">
         
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            
-            <div class="lg:col-span-3 space-y-8">
-                
-                <div id="interactive-game" class="quartz-card border border-quartz-500/40 rounded-xl overflow-hidden shadow-2xl space-y-0">
-                    
-                    <!-- Arena Header Bar -->
-                    <div class="bg-gradient-to-r from-quartz-950 via-gh-card to-quartz-900 border-b border-gh-border p-4 sm:p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-                        <div>
-                            <div class="flex items-center space-x-2">
-                                <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-                                <span class="text-xs font-mono uppercase tracking-wider text-quartz-300 font-bold" id="liveSyncStatus">Real-Time Sync Active</span>
-                            </div>
-                            <h3 class="text-2xl font-extrabold text-white crystal-glow mt-1" id="headerRoleTitle">Quality Doodles Arena</h3>
-                            <p class="text-xs text-gh-muted mt-0.5" id="headerRoleSubtitle">Connecting Player and Game Master live across devices...</p>
-                        </div>
-
-                        <!-- Synchronized 30s Clock Display -->
-                        <div class="flex items-center space-x-3 bg-gh-bg px-5 py-3 rounded-xl border border-quartz-500/50 shadow-inner">
-                            <i class="fa-solid fa-stopwatch text-2xl text-cyan-400" id="timerIcon"></i>
-                            <div>
-                                <div class="text-[10px] text-gh-muted uppercase font-mono font-bold tracking-wider">Synced Clock</div>
-                                <div class="text-3xl font-mono font-black text-cyan-300 tracking-wider" id="timerDisplay">30.0s</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Work Area -->
-                    <div class="p-4 sm:p-6 bg-gh-bg/95 space-y-6">
-                        
-                        <!-- Control Toolbar -->
-                        <div class="flex flex-wrap items-center justify-between gap-3 bg-gh-card p-3 rounded-xl border border-gh-border shadow-md">
-                            
-                            <!-- Master Clock Control Buttons -->
-                            <div class="flex items-center space-x-2">
-                                <button onclick="triggerStartTimer()" id="startBtn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg shadow-md transition flex items-center gap-1.5 active:scale-95">
-                                    <i class="fa-solid fa-play"></i> Start Clock
-                                </button>
-                                <button onclick="triggerPauseTimer()" id="pauseBtn" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-lg transition active:scale-95">
-                                    <i class="fa-solid fa-pause"></i> Pause
-                                </button>
-                                <button onclick="triggerResetTimer()" class="px-3.5 py-2 bg-gh-border hover:bg-slate-700 text-white font-bold text-xs rounded-lg transition active:scale-95">
-                                    <i class="fa-solid fa-rotate-left"></i> Reset
-                                </button>
-                            </div>
-
-                            <!-- Player Drawing Controls -->
-                            <div class="flex items-center space-x-3" id="playerDrawingTools">
-                                <div class="flex items-center space-x-1.5 bg-gh-bg p-1 rounded-lg border border-gh-border">
-                                    <button onclick="setBrushColor('#ffffff')" class="w-6 h-6 rounded-full bg-white border border-slate-400 focus:ring-2 focus:ring-quartz-400"></button>
-                                    <button onclick="setBrushColor('#36a8f7')" class="w-6 h-6 rounded-full bg-quartz-400 focus:ring-2 focus:ring-white"></button>
-                                    <button onclick="setBrushColor('#ef4444')" class="w-6 h-6 rounded-full bg-red-500 focus:ring-2 focus:ring-white"></button>
-                                    <button onclick="setBrushColor('#10b981')" class="w-6 h-6 rounded-full bg-emerald-500 focus:ring-2 focus:ring-white"></button>
-                                    <button onclick="setBrushColor('#f59e0b')" class="w-6 h-6 rounded-full bg-amber-500 focus:ring-2 focus:ring-white"></button>
-                                </div>
-
-                                <select id="brushSize" onchange="setBrushSize(this.value)" class="bg-gh-bg text-xs font-mono text-gh-text border border-gh-border rounded-lg p-1.5 focus:outline-none focus:border-quartz-400">
-                                    <option value="2">Fine</option>
-                                    <option value="4" selected>Medium</option>
-                                    <option value="8">Thick</option>
-                                </select>
-
-                                <button onclick="triggerClearCanvas()" class="px-3 py-2 bg-rose-950/90 hover:bg-rose-900 border border-rose-700/50 text-rose-200 font-bold text-xs rounded-lg transition flex items-center gap-1 active:scale-95">
-                                    <i class="fa-solid fa-trash-can"></i> Clear Canvas
-                                </button>
-                            </div>
-
-                            <!-- Game Master Mirror Indicator -->
-                            <div class="hidden text-xs font-mono text-amber-300 font-semibold bg-amber-950/60 border border-amber-500/30 px-3 py-1.5 rounded-lg" id="gmDrawNotice">
-                                <i class="fa-solid fa-eye mr-1.5 text-amber-400"></i> Live Mirror View (Watching Player draw...)
-                            </div>
-                        </div>
-
-                        <div class="space-y-3 bg-quartz-950/70 p-4 rounded-xl border border-quartz-500/30 shadow-inner">
-                            <div class="flex items-center justify-between border-b border-gh-border/60 pb-2.5">
-                                <span class="text-xs font-mono font-bold text-quartz-300 uppercase tracking-wider flex items-center gap-2">
-                                    <i class="fa-solid fa-list-check text-quartz-400"></i> 
-                                    <span id="promptListTitle">Sprint Prompts (9 Called-Out Items):</span>
-                                </span>
-
-                                <button onclick="triggerNewPrompts()" id="shufflePromptsBtn" class="text-xs text-amber-400 hover:text-amber-300 font-mono font-bold underline transition">
-                                    <i class="fa-solid fa-shuffle mr-1"></i> Generate New Items (GM Only)
-                                </button>
-                            </div>
-                            
-                            <!-- Prompt Items Grid -->
-                            <div class="grid grid-cols-3 sm:grid-cols-9 gap-2" id="promptsContainer">
-                                <!-- Prompt slots rendered dynamically based on role -->
-                            </div>
-                        </div>
-
-                        <div class="relative w-full aspect-[16/9] sm:aspect-[21/9] bg-slate-950 rounded-xl border-2 border-quartz-500/40 overflow-hidden shadow-2xl">
-                            
-                            <!-- Canvas Element -->
-                            <canvas id="doodleCanvas" class="w-full h-full block bg-slate-950"></canvas>
-                            
-                            <!-- 9 Quadrant Grid Lines -->
-                            <div class="absolute inset-0 pointer-events-none grid grid-cols-3 grid-rows-3 border border-quartz-500/10">
-                                <div class="border border-quartz-500/10 p-1.5 text-[10px] text-slate-600 font-mono font-bold">Box 1</div>
-                                <div class="border border-quartz-500/10 p-1.5 text-[10px] text-slate-600 font-mono font-bold">Box 2</div>
-                                <div class="border border-quartz-500/10 p-1.5 text-[10px] text-slate-600 font-mono font-bold">Box 3</div>
-                                <div class="border border-quartz-500/10 p-1.5 text-[10px] text-slate-600 font-mono font-bold">Box 4</div>
-                                <div class="border border-quartz-500/10 p-1.5 text-[10px] text-slate-600 font-mono font-bold">Box 5</div>
-                                <div class="border border-quartz-500/10 p-1.5 text-[10px] text-slate-600 font-mono font-bold">Box 6</div>
-                                <div class="border border-quartz-500/10 p-1.5 text-[10px] text-slate-600 font-mono font-bold">Box 7</div>
-                                <div class="border border-quartz-500/10 p-1.5 text-[10px] text-slate-600 font-mono font-bold">Box 8</div>
-                                <div class="border border-quartz-500/10 p-1.5 text-[10px] text-slate-600 font-mono font-bold">Box 9</div>
-                            </div>
-
-                            <!-- Time's Up Overlay -->
-                            <div id="timesUpOverlay" class="hidden absolute inset-0 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center space-y-4 z-20">
-                                <i class="fa-solid fa-hourglass-end text-6xl text-rose-500 animate-bounce"></i>
-                                <h4 class="text-3xl font-black text-white uppercase tracking-widest text-center">TIME'S UP!</h4>
-                                <p class="text-xs sm:text-sm text-slate-300 text-center max-w-md px-4">Sprint completed! Release mouse/stylus. Game Master is verifying drawings for points.</p>
-                                <button onclick="hideTimesUpOverlay()" class="px-5 py-2.5 bg-quartz-600 hover:bg-quartz-500 text-white rounded-xl text-xs font-bold transition shadow-lg">
-                                    Inspect Canvas Drawings
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="bg-quartz-950/70 border border-quartz-500/30 rounded-xl p-5 space-y-4">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gh-border pb-3">
-                                <div>
-                                    <h4 class="font-bold text-white text-base flex items-center gap-2">
-                                        <i class="fa-solid fa-user-check text-quartz-400"></i> Game Master Approval & Score Tally
-                                    </h4>
-                                    <p class="text-xs text-gh-muted">Click each drawing approved by the Game Master during Show & Tell verification.</p>
-                                </div>
-
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-xs font-mono text-gh-muted font-bold">Approved Score:</span>
-                                    <span id="scoreDisplay" class="text-2xl font-mono font-black text-cyan-300 bg-gh-card px-4 py-1.5 rounded-lg border border-cyan-500/40 shadow-inner">
-                                        0 / 9
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-3 sm:grid-cols-9 gap-2" id="approvalCheckboxes">
-                                <!-- Dynamic approval buttons -->
-                            </div>
-
-                            <!-- Reward Status Banner -->
-                            <div id="rewardBanner" class="p-4 rounded-xl bg-gh-card border border-gh-border flex flex-col sm:flex-row items-center justify-between gap-3">
-                                <div class="flex items-center space-x-3">
-                                    <i class="fa-solid fa-award text-3xl text-slate-500" id="rewardIcon"></i>
-                                    <div>
-                                        <div id="rewardTitle" class="text-sm font-bold text-white">Select approved items above</div>
-                                        <div id="rewardDesc" class="text-xs text-gh-muted">5 points = 1 giveaway • 9 points = Full Sweep (2 giveaways)</div>
-                                    </div>
-                                </div>
-                                <span class="text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-quartz-900 border border-quartz-500/40 text-quartz-300 shadow">
-                                    + QuARTS Sticker
-                                </span>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-                <div id="readme-section" class="quartz-card border border-gh-border rounded-xl overflow-hidden shadow-xl">
-                    <div class="bg-gh-card border-b border-gh-border px-5 py-3 flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <i class="fa-solid fa-book-open text-quartz-400"></i>
-                            <span class="font-mono text-sm font-semibold text-quartz-200">README.md</span>
-                        </div>
-                    </div>
-
-                    <div class="p-6 md:p-8 space-y-8 text-gh-text leading-relaxed">
-                        <div class="text-center py-6 px-4 rounded-xl bg-gradient-to-b from-quartz-900/50 via-gh-card to-quartz-950/70 border border-quartz-500/30 shadow-lg">
-                            <span class="px-3.5 py-1 rounded-full bg-quartz-500/10 border border-quartz-400/40 text-quartz-300 text-xs font-bold tracking-wider uppercase">
-                                ETE QUALITY WORKSTREAM
-                            </span>
-                            <h1 class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-quartz-300 to-cyan-400 crystal-glow mt-2">
-                                QUARTS (QUALITY DOODLES)
-                            </h1>
-                            <p class="text-xs sm:text-sm text-gh-muted mt-2">Draw as many called-out items as you can in 30 seconds, then name them clearly to get your Game Master's approval!</p>
-                        </div>
-
-                        <!-- Objective & Mechanics -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="bg-gh-card p-5 rounded-xl border border-gh-border space-y-3">
-                                <h3 class="font-bold text-white text-sm flex items-center gap-2">
-                                    <i class="fa-solid fa-stopwatch text-cyan-400"></i> The Sprint (30 Seconds)
-                                </h3>
-                                <ul class="list-disc list-inside text-xs text-gh-muted space-y-2">
-                                    <li><strong class="text-slate-200">Start Timer:</strong> Game Master triggers the 30-second clock.</li>
-                                    <li><strong class="text-slate-200">Call & Draw:</strong> Game Master calls out everyday items one by one (max 9). The player sketches each as fast as possible.</li>
-                                    <li><strong class="text-slate-200">Time's Up:</strong> Release the mouse/stylus immediately when time expires.</li>
-                                </ul>
-                            </div>
-
-                            <div class="bg-gh-card p-5 rounded-xl border border-gh-border space-y-3">
-                                <h3 class="font-bold text-white text-sm flex items-center gap-2">
-                                    <i class="fa-solid fa-chalkboard-user text-emerald-400"></i> Show & Tell Verification
-                                </h3>
-                                <ul class="list-disc list-inside text-xs text-gh-muted space-y-2">
-                                    <li><strong class="text-slate-200">Present:</strong> Display the monitor/canvas to the Game Master.</li>
-                                    <li><strong class="text-slate-200">Identify:</strong> Point to each drawing on screen and state in any order what it is.</li>
-                                    <li><strong class="text-slate-200">Approve:</strong> Game Masters agree if the drawing clearly matches the answer.</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <!-- Scoring -->
-                        <div class="bg-quartz-950/60 p-5 rounded-xl border border-quartz-500/30 space-y-3">
-                            <h3 class="font-bold text-white text-sm flex items-center gap-2">
-                                <i class="fa-solid fa-trophy text-amber-400"></i> Scoring & Giveaways
-                            </h3>
-                            <ul class="list-disc list-inside text-xs text-gh-muted space-y-2">
-                                <li><strong class="text-slate-200">Clear Drawing:</strong> 1 pt per approved drawing (minimum of 5 points awarded one (1) giveaway).</li>
-                                <li><strong class="text-slate-200">Full Sweep:</strong> Two (2) giveaways if all 9 items are drawn and approved!</li>
-                                <li><strong class="text-cyan-300">Note:</strong> Every participant receives a <strong>QuARTS sticker</strong> automatically!</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
+        <!-- TOP WORKSTREAM BANNER -->
+        <div class="quartz-card rounded-xl p-5 mb-6 text-white relative overflow-hidden shadow-xl">
+            <div class="absolute -right-10 -bottom-10 text-quartz-dark/20 text-9xl pointer-events-none">
+                <i class="fa-solid fa-gem"></i>
             </div>
+            <div class="flex flex-wrap items-center justify-between gap-4 relative z-10">
+                <div>
+                    <div class="inline-flex items-center gap-2 bg-quartz-dark/60 text-quartz-light text-xs px-3 py-1 rounded-full border border-quartz-glow/40 mb-2 font-mono">
+                        <i class="fa-solid fa-shield-halved"></i> ETE QUALITY WORKSTREAM
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-2">
+                        QuARTS <span class="text-quartz-glow font-normal text-xl sm:text-2xl">(Quality Doodles)</span>
+                    </h1>
+                    <p class="text-sm text-github-muted max-w-2xl mt-1">
+                        Draw as many called-out items as you can in 30 seconds, then name them clearly to get your game masters' approval for points!
+                    </p>
+                </div>
 
-            <!-- Sidebar -->
-            <div class="space-y-6">
-                <div class="quartz-card border border-gh-border p-5 rounded-xl space-y-4 shadow-xl">
-                    <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                        <i class="fa-solid fa-gem text-quartz-400"></i> Project Details
-                    </h3>
-                    <div class="space-y-2.5 text-xs text-gh-text border-t border-gh-border pt-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-gh-muted">Workstream</span>
-                            <span class="font-bold text-quartz-200">ETE Quality</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-gh-muted">Project Name</span>
-                            <span class="font-mono text-cyan-300">QuARTS</span>
-const DEFAULT_PROMPTS = [
-    "Coffee Mug", "Sunglasses", "Bicycle", "Headphones", "Eiffel Tower",
-    "Pizza Slice", "Running Shoe", "Wristwatch", "Smartphone"
-];
-
-const ITEM_CATEGORIES = [
-    "Coffee Mug", "Sunglasses", "Bicycle", "Headphones", "Eiffel Tower",
-    "Pizza Slice", "Running Shoe", "Wristwatch", "Smartphone", "Laptop",
-    "Guitar", "Camera", "Basketball", "Backpack", "Desk Lamp",
-    "Umbrella", "Water Bottle", "Gamepad", "Alarm Clock", "Headset"
-];
-
-// Master Prompt generator function
-function generateRandomPromptsList() {
-    const shuffled = [...ITEM_CATEGORIES].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 9);
-}
-
-// Render Master Prompt Box in GM Panel
-function renderGmMasterPrompts(prompts) {
-    const container = document.getElementById("gmMasterPromptsList");
-    if (!container) return;
-    
-    container.innerHTML = prompts.map((prompt, index) => `
-        <div class="flex items-center gap-2 bg-slate-900/70 p-2 rounded-lg border border-indigo-500/20">
-            <span class="w-6 h-6 rounded-full bg-indigo-600/60 text-indigo-200 text-xs font-bold flex items-center justify-center">
-                ${index + 1}
-            </span>
-            <span class="font-semibold text-slate-100 truncate">${prompt}</span>
+                <!-- LIVE TIMER DISPLAY -->
+                <div class="bg-github-bg/90 border-2 border-quartz-glow rounded-xl p-4 text-center min-w-[180px] quartz-glow">
+                    <div class="text-[10px] font-mono text-quartz-light uppercase tracking-widest mb-1">Sprint Clock</div>
+                    <div id="timerDisplay" class="text-4xl font-black font-mono text-white tracking-wider">30.0s</div>
+                    <div id="timerControls" class="mt-2 flex justify-center gap-2">
+                        <button id="btnStart" onclick="startSprint()" class="bg-github-success hover:opacity-90 text-white text-xs px-3 py-1 rounded font-semibold transition">
+                            <i class="fa-solid fa-play mr-1"></i> Start
+                        </button>
+                        <button id="btnReset" onclick="resetSprint()" class="bg-github-border hover:bg-github-border/80 text-white text-xs px-3 py-1 rounded font-semibold transition">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
-    `).join('');
-}
 
-// Update GM Card rendering to ensure prompt title is clearly displayed
-function renderGmGrid(prompts, strokesData) {
-    const grid = document.getElementById("gmCardsGrid");
-    if (!grid) return;
+        <!-- GAME MASTER CALLOUT BAR (VISIBLE IN GM MODE ONLY) -->
+        <div id="gmCalloutPanel" class="hidden mb-6 bg-quartz-dark/40 border-2 border-quartz-glow rounded-xl p-4 text-white shadow-lg">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <div class="flex items-center gap-2 text-quartz-light font-bold text-sm">
+                    <i class="fa-solid fa-bullhorn text-amber-400 text-lg animate-bounce"></i>
+                    GAME MASTER CALLOUT KEY (Call items verbally 1-by-1!)
+                </div>
+                <button onclick="generateNewItems()" class="bg-quartz-deep hover:bg-quartz-glow text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition">
+                    <i class="fa-solid fa-shuffle mr-1"></i> New Item List
+                </button>
+            </div>
+            <div id="gmItemsList" class="grid grid-cols-3 sm:grid-cols-9 gap-2 text-center font-mono text-xs">
+                <!-- Generated items appear here -->
+            </div>
+        </div>
 
-    grid.innerHTML = prompts.map((prompt, idx) => {
-        const itemNum = idx + 1;
-        return `
-            <div class="glass-card p-4 flex flex-col space-y-3 border-indigo-500/20 hover:border-indigo-500/40 transition-all">
-                <div class="flex justify-between items-center bg-slate-900/60 p-2 rounded-lg border border-slate-700/50">
-                    <span class="badge badge-purple text-xs font-bold">Item #${itemNum}</span>
-                    <span class="text-sm font-bold text-amber-300 truncate max-w-[180px]"><i class="fas fa-pencil-alt mr-1"></i>${prompt}</span>
+        <!-- DOODLE GRID ARENA -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            
+            <!-- DRAWING CANVAS CONTAINER (2 COLS) -->
+            <div class="lg:col-col-span-2 bg-github-card border border-github-border rounded-xl p-4 shadow-xl flex flex-col">
+                <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-github-border mb-3">
+                    <div class="flex items-center gap-2 font-semibold text-sm text-white">
+                        <i class="fa-solid fa-palette text-quartz-glow"></i>
+                        <span id="canvasTitle">Doodle Canvas Grid (9 Quadrants)</span>
+                    </div>
+
+                    <!-- BRUSH CONTROLS -->
+                    <div id="brushTools" class="flex items-center gap-2">
+                        <input type="color" id="brushColor" value="#38bdf8" class="w-7 h-7 rounded border-0 bg-transparent cursor-pointer">
+                        <input type="range" id="brushSize" min="2" max="15" value="4" class="w-20 accent-quartz-glow">
+                        <button onclick="clearCanvas()" class="bg-red-900/50 hover:bg-red-800 text-red-200 border border-red-700 text-xs px-2.5 py-1 rounded transition">
+                            <i class="fa-solid fa-trash mr-1"></i> Clear
+                        </button>
+                    </div>
                 </div>
 
-                <div class="canvas-container relative rounded-lg border border-slate-700/80 bg-slate-950 overflow-hidden">
-                    <canvas id="gmCanvas_${itemNum}" class="w-full h-48 block cursor-default"></canvas>
-                </div>
-
-                <div class="flex items-center justify-between text-xs text-slate-400 px-1">
-                    <span><i class="fas fa-eye text-indigo-400 mr-1"></i> Live Mirror</span>
-                    <span id="strokeCount_${itemNum}">${(strokesData && strokesData[itemNum]) ? strokesData[itemNum].length : 0} strokes</span>
+                <!-- CANVAS AREA -->
+                <div class="relative w-full aspect-square max-w-[550px] mx-auto bg-github-bg border-2 border-github-border rounded-lg overflow-hidden shadow-inner">
+                    <canvas id="doodleCanvas" class="w-full h-full block"></canvas>
+                    
+                    <!-- TIME'S UP OVERLAY -->
+                    <div id="timesUpOverlay" class="hidden absolute inset-0 bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 z-20">
+                        <i class="fa-solid fa-hand text-amber-400 text-5xl mb-2 animate-bounce"></i>
+                        <h2 class="text-3xl font-black text-white tracking-widest uppercase">Time's Up!</h2>
+                        <p class="text-sm text-quartz-light mt-1">Release mouse / touch immediately!</p>
+                        <p class="text-xs text-github-muted mt-4">Proceed to Show & Tell Verification with Game Masters.</p>
+                    </div>
                 </div>
             </div>
-        `;
-    }).join('');
 
-    // Attach/Redraw mirror canvases
-    prompts.forEach((_, idx) => {
-        const itemNum = idx + 1;
-        const canvas = document.getElementById(`gmCanvas_${itemNum}`);
-        if (canvas && strokesData && strokesData[itemNum]) {
-            drawStrokesToCanvas(canvas, strokesData[itemNum]);
-        }
-    });
-}
+            <!-- SCORE & APPROVAL PANEL (1 COL) -->
+            <div class="bg-github-card border border-github-border rounded-xl p-4 shadow-xl flex flex-col justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-white pb-3 border-b border-github-border flex items-center justify-between">
+                        <span><i class="fa-solid fa-clipboard-check text-quartz-glow mr-1.5"></i> Verification & Score</span>
+                        <span class="text-xs font-mono text-github-muted">QuARTS Standard</span>
+                    </h3>
 
-document.getElementById("btnRegeneratePrompts")?.addEventListener("click", async () => {
-    const newPrompts = generateRandomPromptsList();
-    if (db && currentRoomCode) {
-        try {
-            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomCode);
-            await updateDoc(roomRef, { prompts: newPrompts });
-        } catch (err) {
-            console.error("Error updating prompts in database:", err);
-        }
-    } else {
-        renderGmMasterPrompts(newPrompts);
-        renderGmGrid(newPrompts, currentStrokes);
-    }
-});
+                    <!-- SHOW & TELL CHECKLIST -->
+                    <div class="mt-4 space-y-3 text-xs">
+                        <div class="p-2.5 bg-github-bg rounded-lg border border-github-border">
+                            <span class="font-bold text-quartz-light block mb-0.5">1. Present:</span>
+                            <span class="text-github-muted">Display your monitor/device clearly to the Game Masters.</span>
+                        </div>
+                        <div class="p-2.5 bg-github-bg rounded-lg border border-github-border">
+                            <span class="font-bold text-quartz-light block mb-0.5">2. Identify:</span>
+                            <span class="text-github-muted">Point to each drawing on the screen and state in any order what it is.</span>
+                        </div>
+                        <div class="p-2.5 bg-github-bg rounded-lg border border-github-border">
+                            <span class="font-bold text-quartz-light block mb-0.5">3. Approve:</span>
+                            <span class="text-github-muted">Game Masters evaluate if drawings clearly match called items.</span>
+                        </div>
+                    </div>
 
-// Update Firestore listener to render prompts dynamically in GM view
-function syncRoomState(roomData) {
-    const prompts = roomData.prompts || DEFAULT_PROMPTS;
-    renderGmMasterPrompts(prompts);
-    renderGmGrid(prompts, roomData.strokes || {});
-}
+                    <!-- TALLY BOARD -->
+                    <div class="mt-5 p-4 bg-quartz-dark/30 border border-quartz-deep/50 rounded-xl">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-white">Approved Items Count:</span>
+                            <span id="scoreDisplay" class="text-2xl font-black font-mono text-quartz-glow">0 / 9</span>
+                        </div>
 
-        function selectRole(role) {
-            userRole = role;
-            roomCode = document.getElementById('roomInput').value.trim().toUpperCase() || 'QUARTS-1';
-            
-            document.getElementById('roleModal').classList.add('hidden');
-            
-            // Update Navigation Badges
-            document.getElementById('activeRoleBadge').innerText = `Role: ${role === 'gm' ? 'Game Master' : 'Player'}`;
-            document.getElementById('activeRoomBadge').innerText = `Room: ${roomCode}`;
+                        <!-- GM INCREMENT BUTTONS -->
+                        <div id="gmTallyControls" class="grid grid-cols-2 gap-2 mt-3">
+                            <button onclick="adjustScore(-1)" class="bg-github-border hover:bg-github-border/80 text-white py-1.5 rounded font-bold text-xs">
+                                -1 Point
+                            </button>
+                            <button onclick="adjustScore(1)" class="bg-quartz-deep hover:bg-quartz-glow text-white py-1.5 rounded font-bold text-xs">
+                                +1 Point
+                            </button>
+                        </div>
+                    </div>
 
-            // Adjust Role Views
-            if (userRole === 'gm') {
-                document.getElementById('headerRoleTitle').innerText = "Game Master View";
-                document.getElementById('headerRoleSubtitle').innerText = "Viewing secret prompts, live player canvas & master clock";
-                document.getElementById('playerDrawingTools').classList.add('hidden');
-                document.getElementById('gmDrawNotice').classList.remove('hidden');
-                document.getElementById('shufflePromptsBtn').classList.remove('hidden');
-                document.getElementById('promptListTitle').innerText = "Game Master Secret Answer Key (9 Items):";
-            } else {
-                document.getElementById('headerRoleTitle').innerText = "Player Drawing Arena";
-                document.getElementById('headerRoleSubtitle').innerText = "Draw called-out items in 30 seconds • Synced live to Game Master";
-                document.getElementById('playerDrawingTools').classList.remove('hidden');
-                document.getElementById('gmDrawNotice').classList.add('hidden');
-                document.getElementById('shufflePromptsBtn').classList.add('hidden');
-                document.getElementById('promptListTitle').innerText = "Sprint Prompts (Listen to GM Callout):";
-            }
+                    <!-- REWARDS STATUS -->
+                    <div class="mt-4 space-y-2 text-xs">
+                        <div id="rewardMin" class="p-2 rounded border bg-github-bg border-github-border text-github-muted flex items-center justify-between">
+                            <span>Clear Drawing (Min 5 pts)</span>
+                            <span class="font-bold">1 Giveaway</span>
+                        </div>
+                        <div id="rewardSweep" class="p-2 rounded border bg-github-bg border-github-border text-github-muted flex items-center justify-between">
+                            <span>Full Sweep (All 9 pts)</span>
+                            <span class="font-bold">2 Giveaways</span>
+                        </div>
+                    </div>
+                </div>
 
-            connectFirebaseSession();
-        }
+                <!-- STICKER NOTE FOOTER -->
+                <div class="mt-6 pt-3 border-t border-github-border text-center text-xs text-quartz-light font-medium bg-quartz-dark/20 py-2 rounded-lg border border-quartz-glow/20">
+                    <i class="fa-solid fa-certificate text-amber-400 mr-1"></i> Every participant receives a <b>QuARTS sticker</b> automatically!
+                </div>
+            </div>
 
-        function connectFirebaseSession() {
-            if (!window.db) return;
+        </div>
 
-            roomRef = window.dbRef(window.db, `rooms/${roomCode}`);
+        <!-- GAME MECHANICS DOCUMENTATION (README STYLE) -->
+        <article class="bg-github-card border border-github-border rounded-xl p-6 shadow-xl text-github-text">
+            <div class="border-b border-github-border pb-3 mb-4 flex items-center justify-between">
+                <div class="flex items-center space-x-2 font-mono text-xs text-github-muted">
+                    <i class="fa-solid fa-book-open text-quartz-glow"></i>
+                    <span class="font-bold text-white">README.md</span>
+                </div>
+                <span class="text-[11px] bg-github-bg border border-github-border px-2 py-0.5 rounded text-github-muted">Official Rules</span>
+            </div>
 
-            // Listen for changes in real time
-            window.dbOnValue(roomRef, (snapshot) => {
-                const data = snapshot.val();
-                
-                if (!data) {
-                    // Seed initial room data if room doesn't exist
-                    if (userRole === 'gm') {
-                        triggerNewPrompts();
-                    }
-                    return;
-                }
+            <div class="space-y-6 text-sm">
+                <div>
+                    <h2 class="text-xl font-bold text-white border-b border-github-border pb-1 mb-2">QUARTS (QUALITY DOODLES)</h2>
+                    <p><strong class="text-quartz-light">Objective:</strong> Draw as many called-out items as you can in 30 seconds, then name them clearly to get your game masters' approval for points.</p>
+                </div>
 
-                // 1. Sync 9 Prompts
-                if (data.prompts) {
-                    currentPrompts = data.prompts;
-                    renderPrompts();
-                    renderApprovalCheckboxes(data.approved || []);
-                }
+                <div>
+                    <h3 class="text-base font-bold text-white mb-2"><i class="fa-solid fa-stopwatch text-quartz-glow mr-1.5"></i> Mechanics - The Sprint: 30 Seconds</h3>
+                    <ul class="list-disc pl-5 space-y-1 text-github-muted">
+                        <li><strong class="text-white">Start Timer:</strong> Set a 30-second clock.</li>
+                        <li><strong class="text-white">Call & Draw:</strong> Game masters call out everyday objects one at a time (max 9). The player sketches each as fast as possible.</li>
+                        <li><strong class="text-white">Time's up:</strong> Release the mouse/touch immediately when time expires.</li>
+                    </ul>
+                </div>
 
-                // 2. Sync Canvas Strokes (GM draws remote stroke)
-                if (data.lastStroke && userRole === 'gm') {
-                    drawRemoteStroke(data.lastStroke);
-                }
+                <div>
+                    <h3 class="text-base font-bold text-white mb-2"><i class="fa-solid fa-eye text-quartz-glow mr-1.5"></i> Show & Tell: Verification</h3>
+                    <ul class="list-disc pl-5 space-y-1 text-github-muted">
+                        <li><strong class="text-white">Present:</strong> Display the monitor to the game masters.</li>
+                        <li><strong class="text-white">Identify:</strong> Point to each drawing on the screen and state in any order what it is.</li>
+                        <li><strong class="text-white">Approve:</strong> Game masters will agree if the drawing clearly matches the answer.</li>
+                    </ul>
+                </div>
 
-                if (data.clearCanvasSignal && userRole === 'gm') {
-                    clearLocalCanvas();
-                }
+                <div>
+                    <h3 class="text-base font-bold text-white mb-2"><i class="fa-solid fa-trophy text-quartz-glow mr-1.5"></i> Scoring</h3>
+                    <ul class="list-disc pl-5 space-y-1 text-github-muted">
+                        <li><strong class="text-white">Clear Drawing:</strong> 1 pt per approved drawing (minimum of 5 points will be awarded one (1) giveaway).</li>
+                        <li><strong class="text-white">Full Sweep:</strong> Two (2) giveaways if all 9 items are drawn and approved.</li>
+                    </ul>
+                </div>
 
-                // 3. Sync Clock State across both screens
-                if (data.timerState) {
-                    syncTimerState(data.timerState);
-                }
-            });
-        }
+                <div class="p-3 bg-quartz-dark/40 border border-quartz-glow/40 rounded-lg text-xs text-quartz-light font-semibold">
+                    Note: Every participant will receive a QuARTS sticker automatically.
+                </div>
+            </div>
+        </article>
 
-        // --- Canvas Drawing Logic & Sync ---
-        function setBrushColor(color) {
-            currentColor = color;
-            ctx.strokeStyle = currentColor;
-        }
+    </main>
 
-        function setBrushSize(size) {
-            currentLineWidth = size;
-            ctx.lineWidth = currentLineWidth;
-        }
+    <!-- FOOTER -->
+    <footer class="border-t border-github-border bg-github-card py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-github-muted flex flex-wrap items-center justify-between gap-2">
+            <div>
+                &copy; ETE Quality Workstream — <strong>QuARTS Quality Doodles</strong>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="hover:underline cursor-pointer">Quality Standards</span>
+                <span class="hover:underline cursor-pointer">Workstream Guidelines</span>
+            </div>
+        </div>
+    </footer>
 
-        function clearLocalCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
+    <!-- LOGIC & FIREBASE SYNC SCRIPT -->
+    <script>
+        // Default Prompt Pool
+        const DEFAULT_PROMPTS = ["Coffee Mug", "Apple", "Car", "Clock", "Star", "Tree", "Phone", "Key", "Umbrella"];
+        
+        let currentRole = 'solo'; // 'gm', 'player', 'solo'
+        let currentRoom = 'QUARTS-1';
+        let approvedScore = 0;
+        let isDrawing = false;
+        let timerInterval = null;
+        let timeLeft = 30.0;
 
-        function triggerClearCanvas() {
-            clearLocalCanvas();
-            if (userRole === 'player' && roomRef) {
-                window.dbUpdate(roomRef, { clearCanvasSignal: Date.now() });
-            }
-        }
+        // Canvas Setup
+        const canvas = document.getElementById('doodleCanvas');
+        const ctx = canvas.getContext('2d');
 
-        function getCanvasCoords(e) {
+        function resizeCanvas() {
             const rect = canvas.getBoundingClientRect();
-            return {
-                x: (e.clientX - rect.left) / rect.width,  // Normalized coordinates (0 to 1)
-                y: (e.clientY - rect.top) / rect.height
-            };
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            drawGrid();
         }
 
-        function startDrawing(e) {
-            if (userRole !== 'player') return;
+        function drawGrid() {
+            ctx.strokeStyle = '#30363d';
+            ctx.lineWidth = 1;
+            const w = canvas.width / 3;
+            const h = canvas.height / 3;
+
+            for (let i = 1; i < 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(w * i, 0);
+                ctx.lineTo(w * i, canvas.height);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(0, h * i);
+                ctx.lineTo(canvas.width, h * i);
+                ctx.stroke();
+            }
+        }
+
+        // ROLE SELECTION
+        function selectRole(role) {
+            currentRole = role;
+            currentRoom = document.getElementById('roomCodeInput').value.trim().toUpperCase() || 'QUARTS-1';
+            document.getElementById('roleModal').classList.add('hidden');
+
+            const badge = document.getElementById('roleBadge');
+            const gmPanel = document.getElementById('gmCalloutPanel');
+            const gmTally = document.getElementById('gmTallyControls');
+
+            if (role === 'gm') {
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> GM View (${currentRoom})`;
+                gmPanel.classList.remove('hidden');
+                gmTally.classList.remove('hidden');
+                renderGMItems(DEFAULT_PROMPTS);
+            } else if (role === 'player') {
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-cyan-400"></span> Player View (${currentRoom})`;
+                gmPanel.classList.add('hidden');
+                gmTally.classList.add('hidden');
+            } else {
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-gray-400"></span> Solo / Local Mode`;
+                gmPanel.classList.remove('hidden');
+                gmTally.classList.remove('hidden');
+                renderGMItems(DEFAULT_PROMPTS);
+            }
+
+            resizeCanvas();
+        }
+
+        function openRoleModal() {
+            document.getElementById('roleModal').classList.remove('hidden');
+        }
+
+        function renderGMItems(items) {
+            const container = document.getElementById('gmItemsList');
+            container.innerHTML = items.map((item, idx) => `
+                <div class="p-2 bg-github-bg border border-quartz-deep rounded-lg text-quartz-light font-bold">
+                    <span class="text-[10px] text-github-muted block">#${idx + 1}</span>
+                    ${item}
+                </div>
+            `).join('');
+        }
+
+        // TIMER LOGIC
+        function startSprint() {
+            if (timerInterval) clearInterval(timerInterval);
+            timeLeft = 30.0;
+            document.getElementById('timesUpOverlay').classList.add('hidden');
+            
+            timerInterval = setInterval(() => {
+                timeLeft -= 0.1;
+                if (timeLeft <= 0) {
+                    timeLeft = 0.0;
+                    clearInterval(timerInterval);
+                    document.getElementById('timesUpOverlay').classList.remove('hidden');
+                }
+                document.getElementById('timerDisplay').innerText = timeLeft.toFixed(1) + 's';
+            }, 100);
+        }
+
+        function resetSprint() {
+            if (timerInterval) clearInterval(timerInterval);
+            timeLeft = 30.0;
+            document.getElementById('timerDisplay').innerText = '30.0s';
+            document.getElementById('timesUpOverlay').classList.add('hidden');
+        }
+
+        // CANVAS DRAWING EVENTS
+        function startDraw(e) {
+            if (timeLeft <= 0) return;
             isDrawing = true;
-            const coords = getCanvasCoords(e);
-            lastX = coords.x;
-            lastY = coords.y;
+            ctx.beginPath();
+            const pos = getPos(e);
+            ctx.moveTo(pos.x, pos.y);
         }
 
         function draw(e) {
-            if (!isDrawing || userRole !== 'player') return;
-            const coords = getCanvasCoords(e);
-
-            // Draw on Player's local canvas
-            drawSegment(lastX, lastY, coords.x, coords.y, currentColor, currentLineWidth);
-
-            // Send stroke coordinates to Game Master via Firebase
-            if (roomRef) {
-                window.dbUpdate(roomRef, {
-                    lastStroke: {
-                        x1: lastX,
-                        y1: lastY,
-                        x2: coords.x,
-                        y2: coords.y,
-                        color: currentColor,
-                        width: currentLineWidth,
-                        ts: Date.now()
-                    }
-                });
-            }
-
-            lastX = coords.x;
-            lastY = coords.y;
-        }
-
-        function stopDrawing() {
-            isDrawing = false;
-        }
-
-        function handleTouchStart(e) {
-            e.preventDefault();
-            if (e.touches.length > 0) startDrawing(e.touches[0]);
-        }
-
-        function handleTouchMove(e) {
-            e.preventDefault();
-            if (e.touches.length > 0) draw(e.touches[0]);
-        }
-
-        function drawSegment(x1, y1, x2, y2, color, width) {
-            const absX1 = x1 * canvas.width;
-            const absY1 = y1 * canvas.height;
-            const absX2 = x2 * canvas.width;
-            const absY2 = y2 * canvas.height;
-
-            ctx.strokeStyle = color;
-            ctx.lineWidth = width;
-            ctx.beginPath();
-            ctx.moveTo(absX1, absY1);
-            ctx.lineTo(absX2, absY2);
+            if (!isDrawing || timeLeft <= 0) return;
+            const pos = getPos(e);
+            ctx.strokeStyle = document.getElementById('brushColor').value;
+            ctx.lineWidth = document.getElementById('brushSize').value;
+            ctx.lineCap = 'round';
+            ctx.lineTo(pos.x, pos.y);
             ctx.stroke();
         }
 
-        function drawRemoteStroke(stroke) {
-            drawSegment(stroke.x1, stroke.y1, stroke.x2, stroke.y2, stroke.color, stroke.width);
+        function stopDraw() {
+            isDrawing = false;
         }
 
-        // --- Synchronized Clock Algorithm ---
-        function triggerStartTimer() {
-            if (!roomRef) return;
-            window.dbUpdate(roomRef, {
-                timerState: {
-                    status: 'running',
-                    startTime: Date.now(),
-                    secondsLeft: timerSeconds
-                }
-            });
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
         }
 
-        function triggerPauseTimer() {
-            if (!roomRef) return;
-            window.dbUpdate(roomRef, {
-                timerState: {
-                    status: 'paused',
-                    secondsLeft: timerSeconds
-                }
-            });
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGrid();
         }
 
-        function triggerResetTimer() {
-            if (!roomRef) return;
-            window.dbUpdate(roomRef, {
-                timerState: {
-                    status: 'reset',
-                    secondsLeft: 30.0
-                }
-            });
-        }
+        // SCORE CONTROLS
+        function adjustScore(delta) {
+            approvedScore = Math.max(0, Math.min(9, approvedScore + delta));
+            document.getElementById('scoreDisplay').innerText = `${approvedScore} / 9`;
 
-        function syncTimerState(state) {
-            clearInterval(timerInterval);
+            const minBox = document.getElementById('rewardMin');
+            const sweepBox = document.getElementById('rewardSweep');
 
-            if (state.status === 'running') {
-                const startTime = state.startTime;
-                const baseSeconds = state.secondsLeft;
-
-                document.getElementById('startBtn').disabled = true;
-                document.getElementById('pauseBtn').disabled = false;
-                hideTimesUpOverlay();
-
-                timerInterval = setInterval(() => {
-                    const elapsed = (Date.now() - startTime) / 1000;
-                    timerSeconds = Math.max(0, baseSeconds - elapsed);
-                    updateTimerDisplay();
-
-                    if (timerSeconds <= 0) {
-                        clearInterval(timerInterval);
-                        showTimesUpOverlay();
-                        document.getElementById('startBtn').disabled = false;
-                        document.getElementById('pauseBtn').disabled = true;
-                    }
-                }, 50);
-            } else if (state.status === 'paused') {
-                timerSeconds = state.secondsLeft;
-                updateTimerDisplay();
-                document.getElementById('startBtn').disabled = false;
-                document.getElementById('pauseBtn').disabled = true;
-            } else if (state.status === 'reset') {
-                timerSeconds = 30.0;
-                updateTimerDisplay();
-                hideTimesUpOverlay();
-                document.getElementById('startBtn').disabled = false;
-                document.getElementById('pauseBtn').disabled = true;
-            }
-        }
-
-        function updateTimerDisplay() {
-            const timerEl = document.getElementById('timerDisplay');
-            timerEl.innerText = timerSeconds.toFixed(1) + 's';
-
-            if (timerSeconds <= 5.0 && timerSeconds > 0) {
-                timerEl.classList.remove('text-cyan-300');
-                timerEl.classList.add('text-rose-500', 'animate-pulse');
+            if (approvedScore >= 5) {
+                minBox.className = "p-2 rounded border bg-emerald-950/60 border-emerald-500 text-emerald-200 font-bold flex items-center justify-between";
             } else {
-                timerEl.classList.remove('text-rose-500', 'animate-pulse');
-                timerEl.classList.add('text-cyan-300');
+                minBox.className = "p-2 rounded border bg-github-bg border-github-border text-github-muted flex items-center justify-between";
             }
-        }
 
-        function showTimesUpOverlay() {
-            document.getElementById('timesUpOverlay').classList.remove('hidden');
-            document.getElementById('timesUpOverlay').classList.add('flex');
-        }
-
-        function hideTimesUpOverlay() {
-            document.getElementById('timesUpOverlay').classList.add('hidden');
-            document.getElementById('timesUpOverlay').classList.remove('flex');
-        }
-
-        // --- Prompts & Score Calculation ---
-        function triggerNewPrompts() {
-            const shuffled = [...defaultPromptList].sort(() => 0.5 - Math.random());
-            const selected = shuffled.slice(0, 9);
-            
-            if (roomRef) {
-                window.dbUpdate(roomRef, {
-                    prompts: selected,
-                    approved: [false, false, false, false, false, false, false, false, false]
-                });
+            if (approvedScore === 9) {
+                sweepBox.className = "p-2 rounded border bg-amber-950/60 border-amber-500 text-amber-200 font-bold flex items-center justify-between";
             } else {
-                currentPrompts = selected;
-                renderPrompts();
+                sweepBox.className = "p-2 rounded border bg-github-bg border-github-border text-github-muted flex items-center justify-between";
             }
         }
 
-        function renderPrompts() {
-            const container = document.getElementById('promptsContainer');
-            container.innerHTML = '';
-
-            currentPrompts.forEach((item, index) => {
-                const badge = document.createElement('div');
-                
-                if (userRole === 'gm') {
-                    // Game Master Secret View (Clear Items Unmasked)
-                    badge.className = 'bg-amber-950/80 border border-amber-500/60 p-2 rounded-lg text-center shadow-lg';
-                    badge.innerHTML = `
-                        <div class="text-[9px] font-mono text-amber-300 font-bold uppercase">Item #${index + 1}</div>
-                        <div class="text-xs font-black text-white truncate crystal-glow-amber">${item}</div>
-                    `;
-                } else {
-                    // Player View (Masked Items)
-                    badge.className = 'bg-gh-bg border border-quartz-500/30 p-2 rounded-lg text-center shadow';
-                    badge.innerHTML = `
-                        <div class="text-[9px] font-mono text-quartz-400 font-bold">Slot #${index + 1}</div>
-                        <div class="text-[11px] font-semibold text-slate-400 flex items-center justify-center gap-1">
-                            <i class="fa-solid fa-lock text-quartz-400/60 text-[10px]"></i>
-                            <span>GM Callout</span>
-                        </div>
-                    `;
-                }
-
-                container.appendChild(badge);
-            });
+        function generateNewItems() {
+            const samplePool = ["Cat", "Sun", "House", "Car", "Tree", "Fish", "Book", "Glasses", "Guitar", "Hat", "Pizza", "Watch", "Moon", "Spoon", "Flower"];
+            const shuffled = samplePool.sort(() => 0.5 - Math.random());
+            const newItems = shuffled.slice(0, 9);
+            renderGMItems(newItems);
         }
 
-        function renderApprovalCheckboxes(approvedList) {
-            const container = document.getElementById('approvalCheckboxes');
-            container.innerHTML = '';
-            score = 0;
+        // EVENT LISTENERS
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDraw);
+        canvas.addEventListener('mouseleave', stopDraw);
 
-            currentPrompts.forEach((item, index) => {
-                const isApproved = approvedList[index] || false;
-                if (isApproved) score++;
+        canvas.addEventListener('touchstart', startDraw);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDraw);
 
-                const btn = document.createElement('button');
-                btn.id = `approve-btn-${index}`;
-                btn.disabled = userRole !== 'gm'; // Game Master controls score approval
-                btn.onclick = () => toggleApproval(index, approvedList);
-                
-                if (isApproved) {
-                    btn.className = 'bg-quartz-900 border border-cyan-400 p-2 rounded-lg flex flex-col items-center justify-center gap-1 text-cyan-300 shadow-md';
-                    btn.innerHTML = `<i class="fa-solid fa-circle-check text-base text-cyan-400"></i><span class="text-[10px] font-mono font-bold truncate max-w-full">${index + 1}. ${item}</span>`;
-                } else {
-                    btn.className = 'bg-gh-card border border-gh-border hover:border-quartz-400 p-2 rounded-lg flex flex-col items-center justify-center gap-1 text-slate-400 transition';
-                    btn.innerHTML = `<i class="fa-regular fa-circle-check text-base"></i><span class="text-[10px] font-mono font-bold truncate max-w-full">${index + 1}. ${item}</span>`;
-                }
-
-                container.appendChild(btn);
-            });
-
-            updateScoreDisplay();
-        }
-
-        function toggleApproval(index, approvedList) {
-            if (userRole !== 'gm' || !roomRef) return;
-            const updated = [...approvedList];
-            updated[index] = !updated[index];
-
-            window.dbUpdate(roomRef, { approved: updated });
-        }
-
-        function updateScoreDisplay() {
-            document.getElementById('scoreDisplay').innerText = `${score} / 9`;
-
-            const rewardTitle = document.getElementById('rewardTitle');
-            const rewardDesc = document.getElementById('rewardDesc');
-            const rewardIcon = document.getElementById('rewardIcon');
-            const rewardBanner = document.getElementById('rewardBanner');
-
-            if (score === 9) {
-                rewardTitle.innerText = "FULL SWEEP! 2 Giveaways Awarded!";
-                rewardDesc.innerText = "All 9 drawings approved! Player wins two (2) giveaways + QuARTS sticker!";
-                rewardIcon.className = "fa-solid fa-crown text-3xl text-amber-300 animate-bounce";
-                rewardBanner.className = "p-4 rounded-xl bg-gradient-to-r from-quartz-900 via-cyan-950 to-quartz-900 border-2 border-cyan-400 shadow-lg flex items-center justify-between";
-            } else if (score >= 5) {
-                rewardTitle.innerText = "1 Giveaway Awarded!";
-                rewardDesc.innerText = `Minimum threshold met (${score}/9)! Player receives 1 giveaway + QuARTS sticker!`;
-                rewardIcon.className = "fa-solid fa-trophy text-3xl text-amber-400";
-                rewardBanner.className = "p-4 rounded-xl bg-quartz-900/80 border border-quartz-400 flex items-center justify-between";
-            } else {
-                rewardTitle.innerText = "Select approved items above";
-                rewardDesc.innerText = "5 points = 1 giveaway • 9 points = Full Sweep (2 giveaways)";
-                rewardIcon.className = "fa-solid fa-award text-2xl text-slate-500";
-                rewardBanner.className = "p-4 rounded-xl bg-gh-card border border-gh-border flex items-center justify-between";
-            }
-        }
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('load', () => {
+            resizeCanvas();
+        });
     </script>
 </body>
 </html>
