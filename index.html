@@ -395,6 +395,13 @@
 
     <!-- LOGIC & REALTIME SYNC SCRIPT -->
     <script>
+        // Initialize Realtime Firebase Database Backend
+        const firebaseConfig = {
+            databaseURL: "https://quarts-doodles-default-rtdb.firebaseio.com"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
         const DEFAULT_PROMPTS = ["Coffee Mug", "Apple", "Car", "Clock", "Star", "Tree", "Phone", "Key", "Umbrella"];
         
         let currentRole = 'player';
@@ -404,11 +411,12 @@
         let timerInterval = null;
         let timeLeft = 30.0;
         let answersRevealed = false;
+        let roomRef = null;
+        let lastPos = null;
 
         const canvas = document.getElementById('doodleCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Draw perfect 3x3 grid dividing lines
         function drawGridLines() {
             ctx.strokeStyle = '#0284c7';
             ctx.lineWidth = 2;
@@ -428,6 +436,76 @@
             }
         }
 
+        function drawStrokeOnCanvas(stroke) {
+            ctx.strokeStyle = stroke.color || '#38bdf8';
+            ctx.lineWidth = stroke.size || 4;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(stroke.x1, stroke.y1);
+            ctx.lineTo(stroke.x2, stroke.y2);
+            ctx.stroke();
+        }
+
+        function setupRoomFirebaseSync(roomCode) {
+            if (roomRef) roomRef.off(); // Unsubscribe previous room listeners
+
+            roomRef = db.ref('rooms/' + roomCode);
+
+            // Sync score
+            roomRef.child('score').on('value', (snapshot) => {
+                const val = snapshot.val();
+                if (val !== null) {
+                    approvedScore = val;
+                    updateScoreDisplay();
+                }
+            });
+
+            // Sync prompts
+            roomRef.child('prompts').on('value', (snapshot) => {
+                const items = snapshot.val();
+                if (items) {
+                    renderGMItems(items);
+                }
+            });
+
+            // Sync answers reveal toggle
+            roomRef.child('answersRevealed').on('value', (snapshot) => {
+                answersRevealed = !!snapshot.val();
+                updateAnswersVisibility();
+            });
+
+            // Sync timer
+            roomRef.child('timer').on('value', (snapshot) => {
+                const tData = snapshot.val();
+                if (tData) {
+                    if (tData.running) {
+                        startLocalTimer(tData.timeLeft);
+                    } else {
+                        if (timerInterval) clearInterval(timerInterval);
+                        timeLeft = tData.timeLeft || 30.0;
+                        document.getElementById('timerDisplay').innerText = timeLeft.toFixed(1) + 's';
+                        if (timeLeft <= 0) {
+                            document.getElementById('timesUpOverlay').classList.remove('hidden');
+                        } else {
+                            document.getElementById('timesUpOverlay').classList.add('hidden');
+                        }
+                    }
+                }
+            });
+
+            // Sync Canvas Strokes
+            roomRef.child('strokes').on('child_added', (snapshot) => {
+                const stroke = snapshot.val();
+                if (stroke) drawStrokeOnCanvas(stroke);
+            });
+
+            // Sync Canvas Clear
+            roomRef.child('clearCanvasTrigger').on('value', (snapshot) => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawGridLines();
+            });
+        }
+
         function selectRole(role) {
             currentRole = role;
             currentRoom = document.getElementById('roomCodeInput').value.trim().toUpperCase() || 'QUARTS-1';
@@ -444,22 +522,29 @@
                 badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> GM View (${currentRoom})`;
                 gmPanel.classList.remove('hidden');
                 gmTally.classList.remove('hidden');
-                brushTools.classList.add('hidden'); // GM is view-only for drawing
+                brushTools.classList.add('hidden');
                 timerGM.classList.remove('hidden');
                 timerPlayer.classList.add('hidden');
                 document.getElementById('canvasTitle').innerText = "Player Live Drawing Stream (View-Only Mode)";
-                renderGMItems(DEFAULT_PROMPTS);
             } else {
                 badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-cyan-400"></span> Player View (${currentRoom})`;
                 gmPanel.classList.add('hidden');
                 gmTally.classList.add('hidden');
-                brushTools.classList.remove('hidden'); // Player has drawing controls
+                brushTools.classList.remove('hidden');
                 timerGM.classList.add('hidden');
                 timerPlayer.classList.remove('hidden');
                 document.getElementById('canvasTitle').innerText = "Doodle Canvas Grid (9 Perfect Squares)";
             }
 
             drawGridLines();
+            setupRoomFirebaseSync(currentRoom);
+
+            // Initialize default prompts if room is new
+            roomRef.child('prompts').get().then((snapshot) => {
+                if (!snapshot.exists()) {
+                    roomRef.child('prompts').set(DEFAULT_PROMPTS);
+                }
+            });
         }
 
         function openRoleModal() {
@@ -485,25 +570,48 @@
         }
 
         function toggleRevealAnswers() {
+            if (currentRole !== 'gm') return;
             answersRevealed = !answersRevealed;
+            roomRef.child('answersRevealed').set(answersRevealed);
+        }
+
+        function updateAnswersVisibility() {
             const btn = document.getElementById('btnRevealPlayer');
             const panel = document.getElementById('playerAnswersPanel');
 
             if (answersRevealed) {
-                btn.innerHTML = `<i class="fa-solid fa-eye-slash mr-1"></i> Hide Items from Player`;
+                if (btn) btn.innerHTML = `<i class="fa-solid fa-eye-slash mr-1"></i> Hide Items from Player`;
                 panel.classList.remove('hidden');
             } else {
-                btn.innerHTML = `<i class="fa-solid fa-eye mr-1"></i> Reveal Items to Player`;
+                if (btn) btn.innerHTML = `<i class="fa-solid fa-eye mr-1"></i> Reveal Items to Player`;
                 panel.classList.add('hidden');
             }
         }
 
-        // TIMER LOGIC
+        // TIMER SYNC LOGIC
         function triggerStartSprint() {
+            if (currentRole !== 'gm') return;
+            roomRef.child('timer').set({
+                running: true,
+                timeLeft: 30.0,
+                updatedAt: Date.now()
+            });
+        }
+
+        function triggerResetSprint() {
+            if (currentRole !== 'gm') return;
+            roomRef.child('timer').set({
+                running: false,
+                timeLeft: 30.0,
+                updatedAt: Date.now()
+            });
+        }
+
+        function startLocalTimer(initialTime) {
             if (timerInterval) clearInterval(timerInterval);
-            timeLeft = 30.0;
+            timeLeft = initialTime;
             document.getElementById('timesUpOverlay').classList.add('hidden');
-            
+
             timerInterval = setInterval(() => {
                 timeLeft -= 0.1;
                 if (timeLeft <= 0) {
@@ -515,30 +623,28 @@
             }, 100);
         }
 
-        function triggerResetSprint() {
-            if (timerInterval) clearInterval(timerInterval);
-            timeLeft = 30.0;
-            document.getElementById('timerDisplay').innerText = '30.0s';
-            document.getElementById('timesUpOverlay').classList.add('hidden');
-        }
-
         // CANVAS DRAWING LOGIC
         function startDraw(e) {
             if (currentRole === 'gm' || timeLeft <= 0) return;
             isDrawing = true;
-            ctx.beginPath();
-            const pos = getPos(e);
-            ctx.moveTo(pos.x, pos.y);
+            lastPos = getPos(e);
         }
 
         function draw(e) {
             if (!isDrawing || currentRole === 'gm' || timeLeft <= 0) return;
-            const pos = getPos(e);
-            ctx.strokeStyle = document.getElementById('brushColor').value;
-            ctx.lineWidth = document.getElementById('brushSize').value;
-            ctx.lineCap = 'round';
-            ctx.lineTo(pos.x, pos.y);
-            ctx.stroke();
+            const currentPos = getPos(e);
+            const strokeData = {
+                x1: lastPos.x,
+                y1: lastPos.y,
+                x2: currentPos.x,
+                y2: currentPos.y,
+                color: document.getElementById('brushColor').value,
+                size: parseInt(document.getElementById('brushSize').value)
+            };
+
+            // Send stroke to Firebase
+            roomRef.child('strokes').push(strokeData);
+            lastPos = currentPos;
         }
 
         function stopDraw() {
@@ -556,13 +662,19 @@
         }
 
         function triggerClearCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawGridLines();
+            if (currentRole === 'gm') return;
+            roomRef.child('strokes').remove();
+            roomRef.child('clearCanvasTrigger').set(Date.now());
         }
 
         // SCORE CONTROLS
         function adjustScore(delta) {
-            approvedScore = Math.max(0, Math.min(9, approvedScore + delta));
+            if (currentRole !== 'gm') return;
+            const newScore = Math.max(0, Math.min(9, approvedScore + delta));
+            roomRef.child('score').set(newScore);
+        }
+
+        function updateScoreDisplay() {
             document.getElementById('scoreDisplay').innerText = `${approvedScore} / 9`;
 
             const minBox = document.getElementById('rewardMin');
@@ -582,10 +694,11 @@
         }
 
         function generateNewItems() {
+            if (currentRole !== 'gm') return;
             const samplePool = ["Cat", "Sun", "House", "Car", "Tree", "Fish", "Book", "Glasses", "Guitar", "Hat", "Pizza", "Watch", "Moon", "Spoon", "Flower"];
             const shuffled = samplePool.sort(() => 0.5 - Math.random());
             const newItems = shuffled.slice(0, 9);
-            renderGMItems(newItems);
+            roomRef.child('prompts').set(newItems);
         }
 
         // LISTENERS
