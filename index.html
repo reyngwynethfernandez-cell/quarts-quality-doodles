@@ -62,10 +62,6 @@
             border: 1px solid #0284c7;
         }
 
-        .diamond-clip {
-            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-        }
-
         canvas {
             touch-action: none;
             cursor: crosshair;
@@ -90,7 +86,7 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between antialiased selection:bg-quartz-deep selection:text-white">
 
-    <!-- ROLE & ROOM MODAL -->
+    <!-- ROLE & ROOM SELECTION MODAL -->
     <div id="roleModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
         <div class="bg-github-card border-2 border-quartz-glow rounded-xl max-w-md w-full p-6 text-center shadow-2xl quartz-glow">
             <div class="w-16 h-16 mx-auto mb-3 bg-quartz-dark/50 border border-quartz-glow rounded-full flex items-center justify-center text-quartz-glow text-2xl animate-pulse">
@@ -99,7 +95,7 @@
             
             <p class="text-xs uppercase tracking-widest text-quartz-glow font-bold mb-1">ETE Quality Workstream</p>
             <h2 class="text-2xl font-extrabold text-white mb-2">QuARTS Quality Doodles</h2>
-            <p class="text-sm text-github-muted mb-6">Select your session role to connect real-time across devices!</p>
+            <p class="text-sm text-github-muted mb-6">Enter a Room Code to connect Player and Game Master live across devices!</p>
 
             <div class="mb-5 text-left">
                 <label class="block text-xs font-semibold text-github-text uppercase mb-1">Room Code</label>
@@ -114,16 +110,10 @@
                     <i class="fa-solid fa-gamepad"></i> Join as Player (Drawer)
                 </button>
             </div>
-
-            <div class="pt-3 border-t border-github-border">
-                <button onclick="selectRole('solo')" class="text-xs text-github-muted hover:text-quartz-light underline">
-                    <i class="fa-solid fa-user-ninja mr-1"></i> Continue in Offline / Single Device Mode
-                </button>
-            </div>
         </div>
     </div>
 
-    <!-- MAIN HEADER -->
+    <!-- MAIN REPOSITORY HEADER -->
     <header class="border-b border-github-border bg-github-card sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center space-x-3">
@@ -145,7 +135,7 @@
                     Selecting Role...
                 </div>
                 <button onclick="openRoleModal()" class="bg-github-border hover:bg-github-border/80 text-white px-2.5 py-1 rounded-md text-xs transition">
-                    <i class="fa-solid fa-arrows-rotate mr-1"></i> Switch Role
+                    <i class="fa-solid fa-arrows-rotate mr-1"></i> Switch Role / Room
                 </button>
             </div>
         </div>
@@ -154,7 +144,7 @@
     <!-- CONTENT WRAPPER -->
     <main class="max-w-7xl mx-auto px-4 py-6 w-full flex-grow">
         
-        <!-- TOP WORKSTREAM BANNER -->
+        <!-- WORKSTREAM HEADER BANNER -->
         <div class="quartz-card rounded-xl p-5 mb-6 text-white relative overflow-hidden shadow-xl">
             <div class="absolute -right-10 -bottom-10 text-quartz-dark/20 text-9xl pointer-events-none">
                 <i class="fa-solid fa-gem"></i>
@@ -172,62 +162,92 @@
                     </p>
                 </div>
 
-                <!-- LIVE TIMER DISPLAY -->
-                <div class="bg-github-bg/90 border-2 border-quartz-glow rounded-xl p-4 text-center min-w-[180px] quartz-glow">
-                    <div class="text-[10px] font-mono text-quartz-light uppercase tracking-widest mb-1">Sprint Clock</div>
+                <!-- SYNCHRONIZED TIMER DISPLAY -->
+                <div class="bg-github-bg/90 border-2 border-quartz-glow rounded-xl p-4 text-center min-w-[200px] quartz-glow">
+                    <div class="text-[10px] font-mono text-quartz-light uppercase tracking-widest mb-1">Synchronized Sprint Clock</div>
                     <div id="timerDisplay" class="text-4xl font-black font-mono text-white tracking-wider">30.0s</div>
                     <div id="timerControls" class="mt-2 flex justify-center gap-2">
-                        <button id="btnStart" onclick="startSprint()" class="bg-github-success hover:opacity-90 text-white text-xs px-3 py-1 rounded font-semibold transition">
+                        <button id="btnStart" onclick="triggerStartSprint()" class="bg-github-success hover:opacity-90 text-white text-xs px-3 py-1 rounded font-semibold transition">
                             <i class="fa-solid fa-play mr-1"></i> Start
                         </button>
-                        <button id="btnReset" onclick="resetSprint()" class="bg-github-border hover:bg-github-border/80 text-white text-xs px-3 py-1 rounded font-semibold transition">
-                            <i class="fa-solid fa-rotate-left"></i>
+                        <button id="btnReset" onclick="triggerResetSprint()" class="bg-github-border hover:bg-github-border/80 text-white text-xs px-3 py-1 rounded font-semibold transition">
+                            <i class="fa-solid fa-rotate-left"></i> Reset
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- GAME MASTER CALLOUT BAR (VISIBLE IN GM MODE ONLY) -->
+        <!-- GAME MASTER CALLOUT BAR (VISIBLE ONLY TO GM) -->
         <div id="gmCalloutPanel" class="hidden mb-6 bg-quartz-dark/40 border-2 border-quartz-glow rounded-xl p-4 text-white shadow-lg">
             <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <div class="flex items-center gap-2 text-quartz-light font-bold text-sm">
                     <i class="fa-solid fa-bullhorn text-amber-400 text-lg animate-bounce"></i>
                     GAME MASTER CALLOUT KEY (Call items verbally 1-by-1!)
                 </div>
-                <button onclick="generateNewItems()" class="bg-quartz-deep hover:bg-quartz-glow text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition">
-                    <i class="fa-solid fa-shuffle mr-1"></i> New Item List
-                </button>
+                <div class="flex items-center gap-2">
+                    <button id="btnRevealPlayer" onclick="toggleRevealAnswers()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition">
+                        <i class="fa-solid fa-eye mr-1"></i> Reveal Items to Player
+                    </button>
+                    <button onclick="generateNewItems()" class="bg-quartz-deep hover:bg-quartz-glow text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition">
+                        <i class="fa-solid fa-shuffle mr-1"></i> New Item List
+                    </button>
+                </div>
             </div>
             <div id="gmItemsList" class="grid grid-cols-3 sm:grid-cols-9 gap-2 text-center font-mono text-xs">
                 <!-- Generated items appear here -->
             </div>
         </div>
 
-        <!-- DOODLE GRID ARENA -->
+        <!-- PLAYER REVEALED ITEMS BAR (VISIBLE WHEN REVEALED BY GM) -->
+        <div id="playerAnswersPanel" class="hidden mb-6 bg-quartz-dark/30 border border-quartz-glow/40 rounded-xl p-4 text-white shadow-lg">
+            <div class="text-xs font-bold text-quartz-light uppercase tracking-wider mb-2 flex items-center gap-2">
+                <i class="fa-solid fa-list-check text-emerald-400"></i> Verification Key (Revealed by GM):
+            </div>
+            <div id="playerAnswersList" class="grid grid-cols-3 sm:grid-cols-9 gap-2 text-center font-mono text-xs">
+                <!-- Revealed items list -->
+            </div>
+        </div>
+
+        <!-- MAIN DOODLE ARENA -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             
-            <!-- DRAWING CANVAS CONTAINER (2 COLS) -->
-            <div class="lg:col-col-span-2 bg-github-card border border-github-border rounded-xl p-4 shadow-xl flex flex-col">
-                <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-github-border mb-3">
+            <!-- PERFECT 3x3 SQUARE CANVAS CONTAINER (2 COLS) -->
+            <div class="lg:col-span-2 bg-github-card border border-github-border rounded-xl p-4 shadow-xl flex flex-col items-center">
+                <div class="w-full flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-github-border mb-3">
                     <div class="flex items-center gap-2 font-semibold text-sm text-white">
                         <i class="fa-solid fa-palette text-quartz-glow"></i>
-                        <span id="canvasTitle">Doodle Canvas Grid (9 Quadrants)</span>
+                        <span id="canvasTitle">Doodle Canvas Grid (9 Perfect Squares)</span>
                     </div>
 
-                    <!-- BRUSH CONTROLS -->
+                    <!-- BRUSH TOOLBAR (DISABLED IN GM VIEW-ONLY MODE) -->
                     <div id="brushTools" class="flex items-center gap-2">
                         <input type="color" id="brushColor" value="#38bdf8" class="w-7 h-7 rounded border-0 bg-transparent cursor-pointer">
                         <input type="range" id="brushSize" min="2" max="15" value="4" class="w-20 accent-quartz-glow">
-                        <button onclick="clearCanvas()" class="bg-red-900/50 hover:bg-red-800 text-red-200 border border-red-700 text-xs px-2.5 py-1 rounded transition">
-                            <i class="fa-solid fa-trash mr-1"></i> Clear
+                        <button onclick="triggerClearCanvas()" class="bg-red-900/50 hover:bg-red-800 text-red-200 border border-red-700 text-xs px-2.5 py-1 rounded transition">
+                            <i class="fa-solid fa-trash mr-1"></i> Clear Grid
                         </button>
                     </div>
                 </div>
 
-                <!-- CANVAS AREA -->
-                <div class="relative w-full aspect-square max-w-[550px] mx-auto bg-github-bg border-2 border-github-border rounded-lg overflow-hidden shadow-inner">
-                    <canvas id="doodleCanvas" class="w-full h-full block"></canvas>
+                <!-- PERFECT SQUARE CANVAS WRAPPER -->
+                <div class="relative w-full max-w-[500px] aspect-square bg-github-bg border-2 border-quartz-deep rounded-lg overflow-hidden shadow-2xl quartz-glow">
+                    
+                    <!-- PERFECT 3x3 OVERLAY BADGES FOR SQUARE CELL IDENTIFICATION -->
+                    <div class="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none z-10 border border-quartz-deep/30">
+                        <div class="border border-quartz-deep/30 p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#1</span></div>
+                        <div class="border border-quartz-deep/30 p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#2</span></div>
+                        <div class="border border-quartz-deep/30 p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#3</span></div>
+                        <div class="border border-quartz-deep/30 p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#4</span></div>
+                        <div class="border border-quartz-deep/30 p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#5</span></div>
+                        <div class="border border-quartz-deep/30 p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#6</span></div>
+                        <div class="border border-quartz-deep/30 p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#7</span></div>
+                        <div class="border border-quartz-deep/30 p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#8</span></div>
+                        <div class="border border-quartz-deep/30 p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#9</span></div>
+                    </div>
+
+                    <!-- DRAWING CANVAS -->
+                    <canvas id="doodleCanvas" width="600" height="600" class="w-full h-full block bg-github-bg"></canvas>
                     
                     <!-- TIME'S UP OVERLAY -->
                     <div id="timesUpOverlay" class="hidden absolute inset-0 bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 z-20">
@@ -247,7 +267,7 @@
                         <span class="text-xs font-mono text-github-muted">QuARTS Standard</span>
                     </h3>
 
-                    <!-- SHOW & TELL CHECKLIST -->
+                    <!-- SHOW & TELL VERIFICATION STEPS -->
                     <div class="mt-4 space-y-3 text-xs">
                         <div class="p-2.5 bg-github-bg rounded-lg border border-github-border">
                             <span class="font-bold text-quartz-light block mb-0.5">1. Present:</span>
@@ -263,14 +283,14 @@
                         </div>
                     </div>
 
-                    <!-- TALLY BOARD -->
+                    <!-- SCORE TALLY BOARD -->
                     <div class="mt-5 p-4 bg-quartz-dark/30 border border-quartz-deep/50 rounded-xl">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-xs font-semibold text-white">Approved Items Count:</span>
                             <span id="scoreDisplay" class="text-2xl font-black font-mono text-quartz-glow">0 / 9</span>
                         </div>
 
-                        <!-- GM INCREMENT BUTTONS -->
+                        <!-- GM SCORE ADJUSTMENT BUTTONS (VISIBLE ONLY TO GM) -->
                         <div id="gmTallyControls" class="grid grid-cols-2 gap-2 mt-3">
                             <button onclick="adjustScore(-1)" class="bg-github-border hover:bg-github-border/80 text-white py-1.5 rounded font-bold text-xs">
                                 -1 Point
@@ -281,7 +301,7 @@
                         </div>
                     </div>
 
-                    <!-- REWARDS STATUS -->
+                    <!-- REWARD STATUS INDICATORS -->
                     <div class="mt-4 space-y-2 text-xs">
                         <div id="rewardMin" class="p-2 rounded border bg-github-bg border-github-border text-github-muted flex items-center justify-between">
                             <span>Clear Drawing (Min 5 pts)</span>
@@ -365,32 +385,25 @@
         </div>
     </footer>
 
-    <!-- LOGIC & FIREBASE SYNC SCRIPT -->
+    <!-- LOGIC & REALTIME SYNC SCRIPT -->
     <script>
-        // Default Prompt Pool
         const DEFAULT_PROMPTS = ["Coffee Mug", "Apple", "Car", "Clock", "Star", "Tree", "Phone", "Key", "Umbrella"];
         
-        let currentRole = 'solo'; // 'gm', 'player', 'solo'
+        let currentRole = 'player';
         let currentRoom = 'QUARTS-1';
         let approvedScore = 0;
         let isDrawing = false;
         let timerInterval = null;
         let timeLeft = 30.0;
+        let answersRevealed = false;
 
-        // Canvas Setup
         const canvas = document.getElementById('doodleCanvas');
         const ctx = canvas.getContext('2d');
 
-        function resizeCanvas() {
-            const rect = canvas.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-            drawGrid();
-        }
-
-        function drawGrid() {
-            ctx.strokeStyle = '#30363d';
-            ctx.lineWidth = 1;
+        // Draw perfect 3x3 grid dividing lines
+        function drawGridLines() {
+            ctx.strokeStyle = '#0284c7';
+            ctx.lineWidth = 2;
             const w = canvas.width / 3;
             const h = canvas.height / 3;
 
@@ -407,7 +420,6 @@
             }
         }
 
-        // ROLE SELECTION
         function selectRole(role) {
             currentRole = role;
             currentRoom = document.getElementById('roomCodeInput').value.trim().toUpperCase() || 'QUARTS-1';
@@ -416,24 +428,27 @@
             const badge = document.getElementById('roleBadge');
             const gmPanel = document.getElementById('gmCalloutPanel');
             const gmTally = document.getElementById('gmTallyControls');
+            const brushTools = document.getElementById('brushTools');
+            const timerControls = document.getElementById('timerControls');
 
             if (role === 'gm') {
                 badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> GM View (${currentRoom})`;
                 gmPanel.classList.remove('hidden');
                 gmTally.classList.remove('hidden');
+                brushTools.classList.add('hidden'); // GM is view-only for drawing
+                timerControls.classList.remove('hidden');
+                document.getElementById('canvasTitle').innerText = "Player Live Drawing Stream (View-Only Mode)";
                 renderGMItems(DEFAULT_PROMPTS);
-            } else if (role === 'player') {
+            } else {
                 badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-cyan-400"></span> Player View (${currentRoom})`;
                 gmPanel.classList.add('hidden');
                 gmTally.classList.add('hidden');
-            } else {
-                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-gray-400"></span> Solo / Local Mode`;
-                gmPanel.classList.remove('hidden');
-                gmTally.classList.remove('hidden');
-                renderGMItems(DEFAULT_PROMPTS);
+                brushTools.classList.remove('hidden'); // Player has drawing controls
+                timerControls.classList.add('hidden'); // GM controls the timer
+                document.getElementById('canvasTitle').innerText = "Doodle Canvas Grid (9 Perfect Squares)";
             }
 
-            resizeCanvas();
+            drawGridLines();
         }
 
         function openRoleModal() {
@@ -448,10 +463,32 @@
                     ${item}
                 </div>
             `).join('');
+
+            const playerContainer = document.getElementById('playerAnswersList');
+            playerContainer.innerHTML = items.map((item, idx) => `
+                <div class="p-2 bg-github-bg border border-emerald-500/50 rounded-lg text-emerald-300 font-bold">
+                    <span class="text-[10px] text-github-muted block">#${idx + 1}</span>
+                    ${item}
+                </div>
+            `).join('');
+        }
+
+        function toggleRevealAnswers() {
+            answersRevealed = !answersRevealed;
+            const btn = document.getElementById('btnRevealPlayer');
+            const panel = document.getElementById('playerAnswersPanel');
+
+            if (answersRevealed) {
+                btn.innerHTML = `<i class="fa-solid fa-eye-slash mr-1"></i> Hide Items from Player`;
+                panel.classList.remove('hidden');
+            } else {
+                btn.innerHTML = `<i class="fa-solid fa-eye mr-1"></i> Reveal Items to Player`;
+                panel.classList.add('hidden');
+            }
         }
 
         // TIMER LOGIC
-        function startSprint() {
+        function triggerStartSprint() {
             if (timerInterval) clearInterval(timerInterval);
             timeLeft = 30.0;
             document.getElementById('timesUpOverlay').classList.add('hidden');
@@ -467,16 +504,16 @@
             }, 100);
         }
 
-        function resetSprint() {
+        function triggerResetSprint() {
             if (timerInterval) clearInterval(timerInterval);
             timeLeft = 30.0;
             document.getElementById('timerDisplay').innerText = '30.0s';
             document.getElementById('timesUpOverlay').classList.add('hidden');
         }
 
-        // CANVAS DRAWING EVENTS
+        // CANVAS DRAWING LOGIC
         function startDraw(e) {
-            if (timeLeft <= 0) return;
+            if (currentRole === 'gm' || timeLeft <= 0) return;
             isDrawing = true;
             ctx.beginPath();
             const pos = getPos(e);
@@ -484,7 +521,7 @@
         }
 
         function draw(e) {
-            if (!isDrawing || timeLeft <= 0) return;
+            if (!isDrawing || currentRole === 'gm' || timeLeft <= 0) return;
             const pos = getPos(e);
             ctx.strokeStyle = document.getElementById('brushColor').value;
             ctx.lineWidth = document.getElementById('brushSize').value;
@@ -502,14 +539,14 @@
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
             return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
+                x: (clientX - rect.left) * (canvas.width / rect.width),
+                y: (clientY - rect.top) * (canvas.height / rect.height)
             };
         }
 
-        function clearCanvas() {
+        function triggerClearCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawGrid();
+            drawGridLines();
         }
 
         // SCORE CONTROLS
@@ -540,7 +577,7 @@
             renderGMItems(newItems);
         }
 
-        // EVENT LISTENERS
+        // LISTENERS
         canvas.addEventListener('mousedown', startDraw);
         canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('mouseup', stopDraw);
@@ -550,9 +587,8 @@
         canvas.addEventListener('touchmove', draw);
         canvas.addEventListener('touchend', stopDraw);
 
-        window.addEventListener('resize', resizeCanvas);
         window.addEventListener('load', () => {
-            resizeCanvas();
+            drawGridLines();
         });
     </script>
 </body>
