@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>QuARTS - Quality Doodles | Guaranteed Cross-Device Sync</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuARTS - Quality Doodles | ETE Quality Workstream</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -12,7 +11,7 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Reliable MQTT Client Library for Global WebSocket Cross-Device Communication -->
+    <!-- Paho MQTT WebSockets Client -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
 
     <script>
@@ -51,7 +50,6 @@
             background-color: #0d1117;
             color: #c9d1d9;
             font-family: 'Inter', sans-serif;
-            touch-action: manipulation;
         }
         
         .quartz-glow {
@@ -65,11 +63,9 @@
 
         canvas {
             touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
         }
 
-        /* Custom scrollbars */
+        /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -89,44 +85,34 @@
 <body class="min-h-screen flex flex-col justify-between antialiased selection:bg-quartz-deep selection:text-white">
 
     <!-- ROLE & ROOM SELECTION MODAL -->
-    <div id="roleModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
+    <div id="roleModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
         <div class="bg-github-card border-2 border-quartz-glow rounded-xl max-w-md w-full p-6 text-center shadow-2xl quartz-glow">
             <div class="w-16 h-16 mx-auto mb-3 bg-quartz-dark/50 border border-quartz-glow rounded-full flex items-center justify-center text-quartz-glow text-2xl animate-pulse">
                 <i class="fa-solid font-bold fa-gem"></i>
             </div>
             
             <p class="text-xs uppercase tracking-widest text-quartz-glow font-bold mb-1">ETE Quality Workstream</p>
-            <h2 class="text-2xl font-extrabold text-white mb-1">QuARTS Quality Doodles</h2>
-            <p class="text-xs text-github-muted mb-5">Cross-Device & Cross-Network Global Synchronization Engine</p>
+            <h2 class="text-2xl font-extrabold text-white mb-2">QuARTS Quality Doodles</h2>
+            <p class="text-sm text-github-muted mb-6">Enter a Room Code to connect Player and Game Master live across devices!</p>
 
-            <div class="mb-5 text-left bg-github-bg p-3 rounded-lg border border-github-border">
-                <label class="block text-xs font-semibold text-quartz-light uppercase mb-1">Room Code Channel</label>
-                <div class="flex gap-2">
-                    <input type="text" id="roomCodeInput" value="QUARTS-1" class="w-full bg-github-card border border-quartz-deep rounded-lg px-3 py-2 text-white font-mono text-center focus:border-quartz-glow focus:outline-none uppercase tracking-wider text-lg font-bold">
-                    <button onclick="generateRandomRoom()" class="px-3 bg-github-border hover:bg-github-border/80 text-white rounded-lg text-xs" title="Generate Random Room">
-                        <i class="fa-solid fa-dice"></i>
-                    </button>
-                </div>
-                <p class="text-[11px] text-github-muted mt-1.5"><i class="fa-solid fa-circle-info text-quartz-glow mr-1"></i> Both GM & Player must type the exact same room code.</p>
+            <div class="mb-5 text-left">
+                <label class="block text-xs font-semibold text-github-text uppercase mb-1">Room Code Session</label>
+                <input type="text" id="roomCodeInput" value="QUARTS-1" class="w-full bg-github-bg border border-github-border rounded-lg px-3 py-2 text-white font-mono text-center focus:border-quartz-glow focus:outline-none uppercase tracking-wider text-lg font-bold">
             </div>
 
             <div class="grid grid-cols-1 gap-3 mb-4">
-                <button onclick="selectRole('gm')" class="w-full py-3.5 px-4 bg-quartz-deep hover:bg-quartz-glow text-white font-bold rounded-lg shadow-lg transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-crown text-amber-300 text-lg"></i> Join as Game Master (GM)
+                <button onclick="selectRole('gm')" class="w-full py-3 px-4 bg-quartz-deep hover:bg-quartz-glow text-white font-semibold rounded-lg shadow-lg transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-crown text-amber-300"></i> Join as Game Master
                 </button>
-                <button onclick="selectRole('player')" class="w-full py-3.5 px-4 bg-github-border hover:bg-github-blue/20 text-white font-bold border border-quartz-glow/50 rounded-lg transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-gamepad text-cyan-300 text-lg"></i> Join as Player (Drawer)
+                <button onclick="selectRole('player')" class="w-full py-3 px-4 bg-github-border hover:bg-github-blue/20 text-white font-semibold border border-quartz-glow/40 rounded-lg transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-gamepad text-cyan-300"></i> Join as Player (Drawer)
                 </button>
-            </div>
-            
-            <div class="text-[11px] text-github-muted font-mono bg-github-bg p-2 rounded border border-github-border text-left flex items-center gap-2">
-                <i class="fa-solid fa-globe text-emerald-400"></i> Server: <span class="text-white font-bold">wss://broker.emqx.io:8084/mqtt</span>
             </div>
         </div>
     </div>
 
-    <!-- MAIN HEADER BAR -->
-    <header class="border-b border-github-border bg-github-card sticky top-0 z-40 shadow-lg">
+    <!-- MAIN REPOSITORY HEADER -->
+    <header class="border-b border-github-border bg-github-card sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center space-x-3">
                 <i class="fa-brands fa-github text-2xl text-white"></i>
@@ -135,19 +121,19 @@
                     <span class="mx-1 text-github-muted">/</span>
                     <span class="text-white font-bold hover:underline cursor-pointer flex items-center gap-1.5">
                         quarts-quality-doodles
-                        <span id="roleBadgeHeader" class="text-[10px] bg-quartz-dark text-quartz-light border border-quartz-deep px-2 py-0.5 rounded-full font-mono uppercase">Player</span>
+                        <span class="text-[10px] bg-quartz-dark text-quartz-light border border-quartz-deep px-2 py-0.5 rounded-full font-mono">Public</span>
                     </span>
                 </div>
             </div>
 
-            <!-- STATUS INDICATOR BAR -->
-            <div class="flex items-center gap-2 sm:gap-3 text-xs">
-                <div id="connectionStatusBadge" class="bg-github-bg border border-github-border px-3 py-1.5 rounded-full text-github-text font-mono flex items-center gap-2">
-                    <span id="statusIndicatorDot" class="w-2.5 h-2.5 rounded-full bg-yellow-500 animate-ping"></span>
-                    <span id="statusText" class="font-semibold text-amber-300">Connecting...</span>
+            <!-- STATUS BAR -->
+            <div class="flex items-center gap-3 text-xs">
+                <div id="roleBadge" class="bg-github-bg border border-github-border px-3 py-1 rounded-full text-github-text font-mono flex items-center gap-1.5">
+                    <span id="syncDot" class="w-2 h-2 rounded-full bg-yellow-500 animate-ping"></span>
+                    <span id="syncStatusText">Selecting Role...</span>
                 </div>
-                <button onclick="openRoleModal()" class="bg-github-border hover:bg-github-border/80 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1">
-                    <i class="fa-solid fa-arrows-rotate"></i> <span class="hidden sm:inline">Switch Role / Room</span>
+                <button onclick="openRoleModal()" class="bg-github-border hover:bg-github-border/80 text-white px-2.5 py-1 rounded-md text-xs transition">
+                    <i class="fa-solid fa-arrows-rotate mr-1"></i> Switch Role / Room
                 </button>
             </div>
         </div>
@@ -169,24 +155,24 @@
                     <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-2">
                         QuARTS <span class="text-quartz-glow font-normal text-xl sm:text-2xl">(Quality Doodles)</span>
                     </h1>
-                    <p class="text-xs sm:text-sm text-github-muted max-w-2xl mt-1">
+                    <p class="text-sm text-github-muted max-w-2xl mt-1">
                         Draw as many called-out items as you can in 30 seconds, then name them clearly to get your game masters' approval for points!
                     </p>
                 </div>
 
                 <!-- SYNCHRONIZED TIMER DISPLAY -->
-                <div class="bg-github-bg/95 border-2 border-quartz-glow rounded-xl p-4 text-center min-w-[220px] w-full sm:w-auto quartz-glow">
-                    <div class="text-[11px] font-mono text-quartz-light uppercase tracking-widest mb-1 flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-satellite-dish text-emerald-400 animate-pulse"></i> Global Synced Clock
+                <div class="bg-github-bg/90 border-2 border-quartz-glow rounded-xl p-4 text-center min-w-[220px] quartz-glow">
+                    <div id="timerLabel" class="text-[10px] font-mono text-quartz-light uppercase tracking-widest mb-1">
+                        <i class="fa-solid fa-stopwatch mr-1 text-emerald-400"></i> Sprint Clock
                     </div>
                     <div id="timerDisplay" class="text-4xl font-black font-mono text-white tracking-wider">30.0s</div>
                     
                     <!-- TIMER CONTROLS (VISIBLE ONLY TO GM) -->
-                    <div id="timerControlsGM" class="mt-2.5 flex justify-center gap-2 hidden">
-                        <button onclick="gmStartTimer()" class="bg-github-success hover:bg-emerald-600 text-white text-xs px-3.5 py-1.5 rounded-lg font-bold transition shadow flex items-center gap-1">
-                            <i class="fa-solid fa-play"></i> Start 30s
+                    <div id="timerControlsGM" class="mt-2 flex justify-center gap-2 hidden">
+                        <button onclick="triggerStartSprint()" class="bg-github-success hover:opacity-90 text-white text-xs px-3 py-1.5 rounded font-semibold transition shadow">
+                            <i class="fa-solid fa-play mr-1"></i> Start 30s
                         </button>
-                        <button onclick="gmResetTimer()" class="bg-github-border hover:bg-github-border/80 text-white text-xs px-3.5 py-1.5 rounded-lg font-bold transition flex items-center gap-1">
+                        <button onclick="triggerResetSprint()" class="bg-github-border hover:bg-github-border/80 text-white text-xs px-3 py-1.5 rounded font-semibold transition shadow">
                             <i class="fa-solid fa-rotate-left"></i> Reset
                         </button>
                     </div>
@@ -201,22 +187,22 @@
 
         <!-- GAME MASTER CALLOUT BAR (VISIBLE ONLY TO GM) -->
         <div id="gmCalloutPanel" class="hidden mb-6 bg-quartz-dark/40 border-2 border-quartz-glow rounded-xl p-4 text-white shadow-lg">
-            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <div class="flex items-center gap-2 text-quartz-light font-bold text-sm">
                     <i class="fa-solid fa-bullhorn text-amber-400 text-lg animate-bounce"></i>
                     GAME MASTER CALLOUT KEY (Call items verbally 1-by-1!)
                 </div>
                 <div class="flex items-center gap-2">
-                    <button id="btnRevealPlayer" onclick="gmToggleRevealKey()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition shadow flex items-center gap-1">
-                        <i class="fa-solid fa-eye"></i> <span id="revealBtnText">Reveal Key to Player</span>
+                    <button id="btnRevealPlayer" onclick="toggleRevealAnswers()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition shadow">
+                        <i class="fa-solid fa-eye mr-1"></i> Reveal Key to Player
                     </button>
-                    <button onclick="gmGenerateNewPrompts()" class="bg-quartz-deep hover:bg-quartz-glow text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition shadow flex items-center gap-1">
-                        <i class="fa-solid fa-shuffle"></i> New Prompts
+                    <button onclick="generateNewItems()" class="bg-quartz-deep hover:bg-quartz-glow text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition shadow">
+                        <i class="fa-solid fa-shuffle mr-1"></i> New Prompts
                     </button>
                 </div>
             </div>
             <div id="gmItemsList" class="grid grid-cols-3 sm:grid-cols-9 gap-2 text-center font-mono text-xs">
-                <!-- Prompts render dynamically -->
+                <!-- Generated items appear here -->
             </div>
         </div>
 
@@ -226,7 +212,7 @@
                 <i class="fa-solid fa-list-check text-emerald-400"></i> Correct Called Items (Revealed by GM):
             </div>
             <div id="playerAnswersList" class="grid grid-cols-3 sm:grid-cols-9 gap-2 text-center font-mono text-xs">
-                <!-- Revealed prompts render dynamically -->
+                <!-- Revealed items list -->
             </div>
         </div>
 
@@ -243,10 +229,10 @@
 
                     <!-- BRUSH TOOLBAR (VISIBLE FOR PLAYER DRAWING) -->
                     <div id="brushTools" class="flex items-center gap-2">
-                        <input type="color" id="brushColor" value="#38bdf8" class="w-8 h-8 rounded border-0 bg-transparent cursor-pointer">
-                        <input type="range" id="brushSize" min="2" max="18" value="4" class="w-20 accent-quartz-glow">
-                        <button onclick="playerClearCanvas()" class="bg-red-900/60 hover:bg-red-800 text-red-200 border border-red-700 text-xs px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 font-semibold">
-                            <i class="fa-solid fa-trash-can"></i> Clear Grid
+                        <input type="color" id="brushColor" value="#38bdf8" class="w-7 h-7 rounded border-0 bg-transparent cursor-pointer">
+                        <input type="range" id="brushSize" min="2" max="15" value="4" class="w-20 accent-quartz-glow">
+                        <button onclick="triggerClearCanvas()" class="bg-red-900/50 hover:bg-red-800 text-red-200 border border-red-700 text-xs px-2.5 py-1 rounded transition">
+                            <i class="fa-solid fa-trash mr-1"></i> Clear Grid
                         </button>
                     </div>
                 </div>
@@ -267,15 +253,21 @@
                         <div class="border border-quartz-deep/30 p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#9</span></div>
                     </div>
 
+                    <!-- SHOW & TELL 10-SECOND BANNER OVERLAY -->
+                    <div id="showAndTellBanner" class="hidden absolute top-0 left-0 right-0 z-20 bg-amber-500/90 text-black font-extrabold text-xs py-2 px-3 text-center uppercase tracking-wider animate-pulse flex items-center justify-center gap-2 shadow-lg">
+                        <i class="fa-solid fa-bullhorn text-sm"></i>
+                        <span>Show & Tell Mode (<span id="showAndTellCountdown">10.0s</span>): Name your drawings to Game Master!</span>
+                    </div>
+
                     <!-- DRAWING CANVAS -->
-                    <canvas id="doodleCanvas" width="600" height="600" class="w-full h-full block bg-github-bg cursor-crosshair"></canvas>
+                    <canvas id="doodleCanvas" width="600" height="600" class="w-full h-full block bg-github-bg"></canvas>
                     
-                    <!-- TIME'S UP OVERLAY -->
-                    <div id="timesUpOverlay" class="hidden absolute inset-0 bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 z-20">
+                    <!-- FINAL TIME'S UP OVERLAY (SHOWN AFTER SHOW & TELL PHASE) -->
+                    <div id="timesUpOverlay" class="hidden absolute inset-0 bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 z-30">
                         <i class="fa-solid fa-hand text-amber-400 text-5xl mb-2 animate-bounce"></i>
                         <h2 class="text-3xl font-black text-white tracking-widest uppercase">Time's Up!</h2>
-                        <p class="text-sm text-quartz-light mt-1">Release mouse / touch immediately!</p>
-                        <p class="text-xs text-github-muted mt-4">Proceed to Show & Tell Verification with Game Masters.</p>
+                        <p class="text-sm text-quartz-light mt-1">Presentation time expired!</p>
+                        <p class="text-xs text-github-muted mt-4">Game Masters will now approve points.</p>
                     </div>
                 </div>
             </div>
@@ -289,10 +281,10 @@
                     </h3>
 
                     <!-- SHOW & TELL VERIFICATION STEPS -->
-                    <div class="mt-4 space-y-2.5 text-xs">
+                    <div class="mt-4 space-y-3 text-xs">
                         <div class="p-2.5 bg-github-bg rounded-lg border border-github-border">
-                            <span class="font-bold text-quartz-light block mb-0.5">1. Present:</span>
-                            <span class="text-github-muted">Display your monitor/device clearly to the Game Masters.</span>
+                            <span class="font-bold text-quartz-light block mb-0.5">1. Present (10s Window):</span>
+                            <span class="text-github-muted">Display drawing clearly during the 10-second Show & Tell mode.</span>
                         </div>
                         <div class="p-2.5 bg-github-bg rounded-lg border border-github-border">
                             <span class="font-bold text-quartz-light block mb-0.5">2. Identify:</span>
@@ -313,10 +305,10 @@
 
                         <!-- GM SCORE ADJUSTMENT BUTTONS (VISIBLE ONLY TO GM) -->
                         <div id="gmTallyControls" class="grid grid-cols-2 gap-2 mt-3">
-                            <button onclick="gmAdjustScore(-1)" class="bg-github-border hover:bg-github-border/80 text-white py-1.5 rounded-lg font-bold text-xs active:scale-95 transition">
+                            <button onclick="adjustScore(-1)" class="bg-github-border hover:bg-github-border/80 text-white py-1.5 rounded font-bold text-xs">
                                 -1 Point
                             </button>
-                            <button onclick="gmAdjustScore(1)" class="bg-quartz-deep hover:bg-quartz-glow text-white py-1.5 rounded-lg font-bold text-xs active:scale-95 transition">
+                            <button onclick="adjustScore(1)" class="bg-quartz-deep hover:bg-quartz-glow text-white py-1.5 rounded font-bold text-xs">
                                 +1 Point
                             </button>
                         </div>
@@ -324,11 +316,11 @@
 
                     <!-- REWARD STATUS INDICATORS -->
                     <div class="mt-4 space-y-2 text-xs">
-                        <div id="rewardMin" class="p-2.5 rounded-lg border bg-github-bg border-github-border text-github-muted flex items-center justify-between transition-all">
+                        <div id="rewardMin" class="p-2 rounded border bg-github-bg border-github-border text-github-muted flex items-center justify-between">
                             <span>Clear Drawing (Min 5 pts)</span>
                             <span class="font-bold">1 Giveaway</span>
                         </div>
-                        <div id="rewardSweep" class="p-2.5 rounded-lg border bg-github-bg border-github-border text-github-muted flex items-center justify-between transition-all">
+                        <div id="rewardSweep" class="p-2 rounded border bg-github-bg border-github-border text-github-muted flex items-center justify-between">
                             <span>Full Sweep (All 9 pts)</span>
                             <span class="font-bold">2 Giveaways</span>
                         </div>
@@ -336,7 +328,7 @@
                 </div>
 
                 <!-- STICKER NOTE FOOTER -->
-                <div class="mt-6 pt-3 border-t border-github-border text-center text-xs text-quartz-light font-medium bg-quartz-dark/20 py-2.5 rounded-lg border border-quartz-glow/20">
+                <div class="mt-6 pt-3 border-t border-github-border text-center text-xs text-quartz-light font-medium bg-quartz-dark/20 py-2 rounded-lg border border-quartz-glow/20">
                     <i class="fa-solid fa-certificate text-amber-400 mr-1"></i> Every participant receives a <b>QuARTS sticker</b> automatically!
                 </div>
             </div>
@@ -356,7 +348,7 @@
             <div class="space-y-6 text-sm">
                 <div>
                     <h2 class="text-xl font-bold text-white border-b border-github-border pb-1 mb-2">QUARTS (QUALITY DOODLES)</h2>
-                    <p><strong class="text-quartz-light">Objective:</strong> Draw as many called-out items as you can in 30 seconds, then name them clearly to get your game masters' approval for points.</p>
+                    <p><strong class="text-quartz-light">Objective:</strong> Draw as many called-out items as you can in 30 seconds, then name them clearly during the 10-second Show & Tell window to get your game masters' approval for points.</p>
                 </div>
 
                 <div>
@@ -364,14 +356,14 @@
                     <ul class="list-disc pl-5 space-y-1 text-github-muted">
                         <li><strong class="text-white">Start Timer:</strong> Set a 30-second clock.</li>
                         <li><strong class="text-white">Call & Draw:</strong> Game masters call out everyday objects one at a time (max 9). The player sketches each as fast as possible.</li>
-                        <li><strong class="text-white">Time's up:</strong> Release the mouse/touch immediately when time expires.</li>
+                        <li><strong class="text-white">Stop Drawing:</strong> Drawing is disabled when the 30s clock reaches 0.0s.</li>
                     </ul>
                 </div>
 
                 <div>
-                    <h3 class="text-base font-bold text-white mb-2"><i class="fa-solid fa-eye text-quartz-glow mr-1.5"></i> Show & Tell: Verification</h3>
+                    <h3 class="text-base font-bold text-white mb-2"><i class="fa-solid fa-eye text-quartz-glow mr-1.5"></i> Show & Tell: 10-Second Presentation</h3>
                     <ul class="list-disc pl-5 space-y-1 text-github-muted">
-                        <li><strong class="text-white">Present:</strong> Display the monitor to the game masters.</li>
+                        <li><strong class="text-white">Present:</strong> Drawings stay fully visible for 10 seconds.</li>
                         <li><strong class="text-white">Identify:</strong> Point to each drawing on the screen and state in any order what it is.</li>
                         <li><strong class="text-white">Approve:</strong> Game masters will agree if the drawing clearly matches the answer.</li>
                     </ul>
@@ -406,7 +398,7 @@
         </div>
     </footer>
 
-    <!-- LOGIC & GUARANTEED CROSS-DEVICE MQTT SYNC SCRIPT -->
+    <!-- LOGIC & MQTT REALTIME SYNC SCRIPT -->
     <script>
         const DEFAULT_PROMPTS = ["Coffee Mug", "Apple", "Car", "Clock", "Star", "Tree", "Phone", "Key", "Umbrella"];
         
@@ -414,24 +406,22 @@
         let currentRoom = 'QUARTS-1';
         let approvedScore = 0;
         let isDrawing = false;
+        let timerInterval = null;
+        let sprintEndTime = 0;
+        let showAndTellEndTime = 0;
+        let isSprintRunning = false;
+        let isShowAndTellActive = false;
         let answersRevealed = false;
-        let currentPrompts = [...DEFAULT_PROMPTS];
         let lastPos = null;
 
-        // Synchronized Timestamp Timer variables
-        let timerInterval = null;
-        let timerEndTime = 0;
-        let isTimerRunning = false;
-        let localTimeRemaining = 30.0;
-
-        // MQTT WebSocket Client Variable
+        // MQTT Setup
         let mqttClient = null;
-        let isMqttConnected = false;
+        const mqttBrokerHost = "broker.emqx.io";
+        const mqttBrokerPort = 8084; // WebSocket SSL port
 
         const canvas = document.getElementById('doodleCanvas');
         const ctx = canvas.getContext('2d');
 
-        /* --- 1. CANVAS GRID DRAWING FUNCTIONS --- */
         function drawGridLines() {
             ctx.strokeStyle = '#0284c7';
             ctx.lineWidth = 2;
@@ -441,7 +431,7 @@
             for (let i = 1; i < 3; i++) {
                 ctx.beginPath();
                 ctx.moveTo(w * i, 0);
-                ctx.lineTo(w * i, canvas.height);
+                ctx.lineTo(canvas.width, h * i);
                 ctx.stroke();
 
                 ctx.beginPath();
@@ -455,176 +445,118 @@
             ctx.strokeStyle = stroke.color || '#38bdf8';
             ctx.lineWidth = stroke.size || 4;
             ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
             ctx.beginPath();
             ctx.moveTo(stroke.x1, stroke.y1);
             ctx.lineTo(stroke.x2, stroke.y2);
             ctx.stroke();
         }
 
-        function clearCanvasLocal() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawGridLines();
-        }
-
-        /* --- 2. GUARANTEED MQTT WEBSOCKET REAL-TIME SYNC ENGINE --- */
-        function initMqttSyncEngine() {
-            const cleanRoomCode = currentRoom.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-            const topic = `quarts/room/${cleanRoomCode}/sync`;
-            const clientId = `quarts_${currentRole}_${Math.random().toString(16).substring(2, 8)}`;
-
-            updateConnectionStatus('connecting', `Connecting to Room ${currentRoom}...`);
-
-            if (mqttClient) {
-                try { mqttClient.disconnect(); } catch (e) {}
-            }
-
-            // Connect using public EMQX WebSocket Broker on Port 8084 (SSL/TLS supported on all networks)
-            mqttClient = new Paho.MQTT.Client("broker.emqx.io", 8084, "/mqtt", clientId);
+        function initMQTTConnection(roomCode) {
+            const clientId = "quarts_" + currentRole + "_" + Math.random().toString(16).substr(2, 8);
+            mqttClient = new Paho.MQTT.Client(mqttBrokerHost, mqttBrokerPort, clientId);
 
             mqttClient.onConnectionLost = onConnectionLost;
             mqttClient.onMessageArrived = onMessageArrived;
 
             mqttClient.connect({
                 useSSL: true,
-                timeout: 5,
-                keepAliveInterval: 20,
                 onSuccess: () => {
-                    isMqttConnected = true;
+                    updateSyncBadge(true, `Connected Online (${roomCode})`);
+                    const topic = `quarts/room/${roomCode}/#`;
                     mqttClient.subscribe(topic);
-                    updateConnectionStatus('connected', `Connected Online (${currentRoom})`);
 
-                    // Request latest sync state if player
-                    if (currentRole === 'player') {
-                        publishMqttMessage({ type: 'REQUEST_SYNC' });
+                    // If GM, publish initial default prompts
+                    if (currentRole === 'gm') {
+                        publishMQTT(`quarts/room/${roomCode}/prompts`, { prompts: DEFAULT_PROMPTS });
                     }
                 },
                 onFailure: (err) => {
-                    isMqttConnected = false;
-                    updateConnectionStatus('error', `Connection Failed. Retrying...`);
-                    setTimeout(initMqttSyncEngine, 3000);
+                    console.warn("MQTT Connection failed:", err);
+                    updateSyncBadge(false, "Connection failed - Retrying...");
+                    setTimeout(() => initMQTTConnection(roomCode), 3000);
                 }
             });
         }
 
-        function onConnectionLost(responseObject) {
-            isMqttConnected = false;
-            if (responseObject.errorCode !== 0) {
-                updateConnectionStatus('error', `Reconnecting to Server...`);
-                setTimeout(initMqttSyncEngine, 2000);
+        function updateSyncBadge(isConnected, text) {
+            const dot = document.getElementById('syncDot');
+            const statusText = document.getElementById('syncStatusText');
+            statusText.innerText = text;
+
+            if (isConnected) {
+                dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+            } else {
+                dot.className = "w-2 h-2 rounded-full bg-red-500 animate-ping";
             }
         }
 
-        function publishMqttMessage(payload) {
-            if (!mqttClient || !isMqttConnected) return;
-            const cleanRoomCode = currentRoom.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-            const topic = `quarts/room/${cleanRoomCode}/sync`;
-            const message = new Paho.MQTT.Message(JSON.stringify(payload));
-            message.destinationName = topic;
-            mqttClient.send(message);
+        function publishMQTT(topic, payload) {
+            if (mqttClient && mqttClient.isConnected()) {
+                const message = new Paho.MQTT.Message(JSON.stringify(payload));
+                message.destinationName = topic;
+                message.retained = true;
+                mqttClient.send(message);
+            }
+        }
+
+        function onConnectionLost(responseObject) {
+            if (responseObject.errorCode !== 0) {
+                updateSyncBadge(false, "Reconnecting...");
+                setTimeout(() => initMQTTConnection(currentRoom), 2000);
+            }
         }
 
         function onMessageArrived(message) {
             try {
-                const msg = JSON.parse(message.payloadString);
-                if (!msg || !msg.type) return;
+                const topic = message.destinationName;
+                const data = JSON.parse(message.payloadString);
 
-                switch (msg.type) {
-                    case 'STROKE':
-                        drawStrokeOnCanvas(msg.stroke);
-                        break;
-
-                    case 'CLEAR_CANVAS':
-                        clearCanvasLocal();
-                        break;
-
-                    case 'TIMER_START':
-                        startTimestampTimer(msg.endTime);
-                        break;
-
-                    case 'TIMER_RESET':
-                        resetTimerLocal();
-                        break;
-
-                    case 'SCORE_UPDATE':
-                        approvedScore = msg.score;
-                        updateScoreDisplayUI();
-                        break;
-
-                    case 'PROMPTS_UPDATE':
-                        currentPrompts = msg.prompts;
-                        renderPromptsUI(currentPrompts);
-                        break;
-
-                    case 'REVEAL_TOGGLE':
-                        answersRevealed = msg.answersRevealed;
-                        updateAnswersVisibilityUI();
-                        break;
-
-                    case 'REQUEST_SYNC':
-                        if (currentRole === 'gm') {
-                            publishMqttMessage({
-                                type: 'FULL_SYNC_STATE',
-                                score: approvedScore,
-                                prompts: currentPrompts,
-                                answersRevealed: answersRevealed,
-                                isTimerRunning: isTimerRunning,
-                                endTime: timerEndTime
-                            });
-                        }
-                        break;
-
-                    case 'FULL_SYNC_STATE':
-                        if (currentRole === 'player') {
-                            approvedScore = msg.score;
-                            currentPrompts = msg.prompts;
-                            answersRevealed = msg.answersRevealed;
-                            updateScoreDisplayUI();
-                            renderPromptsUI(currentPrompts);
-                            updateAnswersVisibilityUI();
-
-                            if (msg.isTimerRunning && msg.endTime > Date.now()) {
-                                startTimestampTimer(msg.endTime);
-                            }
-                        }
-                        break;
+                if (topic.endsWith('/stroke')) {
+                    drawStrokeOnCanvas(data);
+                } else if (topic.endsWith('/clear')) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    drawGridLines();
+                } else if (topic.endsWith('/score')) {
+                    approvedScore = data.score;
+                    updateScoreDisplay();
+                } else if (topic.endsWith('/timer')) {
+                    if (data.action === 'start') {
+                        sprintEndTime = data.sprintEndTime;
+                        showAndTellEndTime = data.showAndTellEndTime;
+                        isSprintRunning = true;
+                        isShowAndTellActive = false;
+                        startMasterTimerLoop();
+                    } else if (data.action === 'reset') {
+                        isSprintRunning = false;
+                        isShowAndTellActive = false;
+                        if (timerInterval) clearInterval(timerInterval);
+                        document.getElementById('timerDisplay').innerText = "30.0s";
+                        document.getElementById('timerLabel').innerHTML = `<i class="fa-solid fa-stopwatch mr-1 text-emerald-400"></i> Sprint Clock`;
+                        document.getElementById('showAndTellBanner').classList.add('hidden');
+                        document.getElementById('timesUpOverlay').classList.add('hidden');
+                    }
+                } else if (topic.endsWith('/prompts')) {
+                    renderGMItems(data.prompts);
+                } else if (topic.endsWith('/answersRevealed')) {
+                    answersRevealed = data.revealed;
+                    updateAnswersVisibility();
                 }
             } catch (err) {
-                console.error("MQTT Message Parsing Error:", err);
+                console.error("MQTT Message parse error:", err);
             }
         }
 
-        function updateConnectionStatus(state, text) {
-            const statusText = document.getElementById('statusText');
-            const dot = document.getElementById('statusIndicatorDot');
-
-            statusText.innerText = text;
-            if (state === 'connected') {
-                dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400";
-                statusText.className = "font-semibold text-emerald-400";
-            } else if (state === 'connecting') {
-                dot.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping";
-                statusText.className = "font-semibold text-amber-300";
-            } else {
-                dot.className = "w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse";
-                statusText.className = "font-semibold text-red-400";
-            }
-        }
-
-        /* --- 3. UI STATE & ROLE HANDLERS --- */
         function selectRole(role) {
             currentRole = role;
             currentRoom = document.getElementById('roomCodeInput').value.trim().toUpperCase() || 'QUARTS-1';
             document.getElementById('roleModal').classList.add('hidden');
 
+            const badge = document.getElementById('roleBadge');
             const gmPanel = document.getElementById('gmCalloutPanel');
             const gmTally = document.getElementById('gmTallyControls');
             const brushTools = document.getElementById('brushTools');
             const timerGM = document.getElementById('timerControlsGM');
             const timerPlayer = document.getElementById('timerControlsPlayer');
-            const roleBadgeHeader = document.getElementById('roleBadgeHeader');
-
-            roleBadgeHeader.innerText = role === 'gm' ? 'Game Master' : 'Player';
 
             if (role === 'gm') {
                 gmPanel.classList.remove('hidden');
@@ -633,6 +565,7 @@
                 timerGM.classList.remove('hidden');
                 timerPlayer.classList.add('hidden');
                 document.getElementById('canvasTitle').innerText = "Player Live Drawing Stream (View-Only Mode)";
+                renderGMItems(DEFAULT_PROMPTS);
             } else {
                 gmPanel.classList.add('hidden');
                 gmTally.classList.add('hidden');
@@ -642,24 +575,18 @@
                 document.getElementById('canvasTitle').innerText = "Doodle Canvas Grid (9 Perfect Squares)";
             }
 
-            clearCanvasLocal();
-            renderPromptsUI(currentPrompts);
-            initMqttSyncEngine();
-        }
-
-        function generateRandomRoom() {
-            const rand = Math.floor(100 + Math.random() * 900);
-            document.getElementById('roomCodeInput').value = `QUARTS-${rand}`;
+            drawGridLines();
+            initMQTTConnection(currentRoom);
         }
 
         function openRoleModal() {
             document.getElementById('roleModal').classList.remove('hidden');
         }
 
-        function renderPromptsUI(items) {
+        function renderGMItems(items) {
             const container = document.getElementById('gmItemsList');
             container.innerHTML = items.map((item, idx) => `
-                <div class="p-2 bg-github-bg border border-quartz-deep rounded-lg text-quartz-light font-bold shadow">
+                <div class="p-2 bg-github-bg border border-quartz-deep rounded-lg text-quartz-light font-bold">
                     <span class="text-[10px] text-github-muted block">#${idx + 1}</span>
                     ${item}
                 </div>
@@ -667,140 +594,118 @@
 
             const playerContainer = document.getElementById('playerAnswersList');
             playerContainer.innerHTML = items.map((item, idx) => `
-                <div class="p-2 bg-github-bg border border-emerald-500/50 rounded-lg text-emerald-300 font-bold shadow">
+                <div class="p-2 bg-github-bg border border-emerald-500/50 rounded-lg text-emerald-300 font-bold">
                     <span class="text-[10px] text-github-muted block">#${idx + 1}</span>
                     ${item}
                 </div>
             `).join('');
         }
 
-        /* --- 4. GAME MASTER CONTROLS --- */
-        function gmStartTimer() {
-            if (currentRole !== 'gm') return;
-            const endTime = Date.now() + 30000; // 30 seconds into the future
-            publishMqttMessage({ type: 'TIMER_START', endTime: endTime });
-            startTimestampTimer(endTime);
-        }
-
-        function gmResetTimer() {
-            if (currentRole !== 'gm') return;
-            publishMqttMessage({ type: 'TIMER_RESET' });
-            resetTimerLocal();
-        }
-
-        function gmAdjustScore(delta) {
-            if (currentRole !== 'gm') return;
-            approvedScore = Math.max(0, Math.min(9, approvedScore + delta));
-            updateScoreDisplayUI();
-            publishMqttMessage({ type: 'SCORE_UPDATE', score: approvedScore });
-        }
-
-        function gmToggleRevealKey() {
+        function toggleRevealAnswers() {
             if (currentRole !== 'gm') return;
             answersRevealed = !answersRevealed;
-            updateAnswersVisibilityUI();
-            publishMqttMessage({ type: 'REVEAL_TOGGLE', answersRevealed: answersRevealed });
+            publishMQTT(`quarts/room/${currentRoom}/answersRevealed`, { revealed: answersRevealed });
         }
 
-        function gmGenerateNewPrompts() {
-            if (currentRole !== 'gm') return;
-            const samplePool = ["Coffee Mug", "Apple", "Car", "Clock", "Star", "Tree", "Phone", "Key", "Umbrella", "Cat", "Sun", "House", "Fish", "Book", "Glasses", "Guitar", "Hat", "Pizza", "Watch", "Moon", "Spoon", "Flower"];
-            const shuffled = samplePool.sort(() => 0.5 - Math.random());
-            currentPrompts = shuffled.slice(0, 9);
-            renderPromptsUI(currentPrompts);
-            publishMqttMessage({ type: 'PROMPTS_UPDATE', prompts: currentPrompts });
-        }
-
-        /* --- 5. TIMER & LOCAL DISPLAY UPDATES --- */
-        function startTimestampTimer(endTime) {
-            if (timerInterval) clearInterval(timerInterval);
-            timerEndTime = endTime;
-            isTimerRunning = true;
-            document.getElementById('timesUpOverlay').classList.add('hidden');
-
-            timerInterval = setInterval(() => {
-                const now = Date.now();
-                const remaining = (timerEndTime - now) / 1000;
-
-                if (remaining <= 0) {
-                    localTimeRemaining = 0.0;
-                    isTimerRunning = false;
-                    clearInterval(timerInterval);
-                    document.getElementById('timerDisplay').innerText = '0.0s';
-                    document.getElementById('timesUpOverlay').classList.remove('hidden');
-                } else {
-                    localTimeRemaining = remaining;
-                    document.getElementById('timerDisplay').innerText = remaining.toFixed(1) + 's';
-                }
-            }, 100);
-        }
-
-        function resetTimerLocal() {
-            if (timerInterval) clearInterval(timerInterval);
-            isTimerRunning = false;
-            localTimeRemaining = 30.0;
-            document.getElementById('timerDisplay').innerText = '30.0s';
-            document.getElementById('timesUpOverlay').classList.add('hidden');
-        }
-
-        function updateAnswersVisibilityUI() {
-            const btnText = document.getElementById('revealBtnText');
+        function updateAnswersVisibility() {
+            const btn = document.getElementById('btnRevealPlayer');
             const panel = document.getElementById('playerAnswersPanel');
 
             if (answersRevealed) {
-                if (btnText) btnText.innerText = "Hide Key from Player";
+                if (btn) btn.innerHTML = `<i class="fa-solid fa-eye-slash mr-1"></i> Hide Items from Player`;
                 panel.classList.remove('hidden');
             } else {
-                if (btnText) btnText.innerText = "Reveal Key to Player";
+                if (btn) btn.innerHTML = `<i class="fa-solid fa-eye mr-1"></i> Reveal Items to Player`;
                 panel.classList.add('hidden');
             }
         }
 
-        function updateScoreDisplayUI() {
-            document.getElementById('scoreDisplay').innerText = `${approvedScore} / 9`;
+        // TIMER SYNC LOGIC
+        function triggerStartSprint() {
+            if (currentRole !== 'gm') return;
+            const now = Date.now();
+            const sprintEnd = now + 30000; // 30 seconds sprint
+            const showAndTellEnd = sprintEnd + 10000; // 10 seconds show & tell
 
-            const minBox = document.getElementById('rewardMin');
-            const sweepBox = document.getElementById('rewardSweep');
-
-            if (approvedScore >= 5) {
-                minBox.className = "p-2.5 rounded-lg border bg-emerald-950/80 border-emerald-500 text-emerald-200 font-bold flex items-center justify-between shadow-lg";
-            } else {
-                minBox.className = "p-2.5 rounded-lg border bg-github-bg border-github-border text-github-muted flex items-center justify-between";
-            }
-
-            if (approvedScore === 9) {
-                sweepBox.className = "p-2.5 rounded-lg border bg-amber-950/80 border-amber-500 text-amber-200 font-bold flex items-center justify-between shadow-lg";
-            } else {
-                sweepBox.className = "p-2.5 rounded-lg border bg-github-bg border-github-border text-github-muted flex items-center justify-between";
-            }
+            publishMQTT(`quarts/room/${currentRoom}/timer`, {
+                action: 'start',
+                sprintEndTime: sprintEnd,
+                showAndTellEndTime: showAndTellEnd
+            });
         }
 
-        /* --- 6. PLAYER DRAWING CONTROLS --- */
+        function triggerResetSprint() {
+            if (currentRole !== 'gm') return;
+            publishMQTT(`quarts/room/${currentRoom}/timer`, { action: 'reset' });
+        }
+
+        function startMasterTimerLoop() {
+            if (timerInterval) clearInterval(timerInterval);
+
+            document.getElementById('timesUpOverlay').classList.add('hidden');
+
+            timerInterval = setInterval(() => {
+                const now = Date.now();
+                const sprintRemaining = Math.max(0, (sprintEndTime - now) / 1000);
+
+                if (sprintRemaining > 0) {
+                    // PHASE 1: 30-SECOND DRAWING SPRINT
+                    isSprintRunning = true;
+                    isShowAndTellActive = false;
+                    document.getElementById('timerLabel').innerHTML = `<i class="fa-solid fa-stopwatch mr-1 text-emerald-400"></i> Sprint Clock`;
+                    document.getElementById('timerDisplay').innerText = sprintRemaining.toFixed(1) + 's';
+                    document.getElementById('showAndTellBanner').classList.add('hidden');
+                    document.getElementById('timesUpOverlay').classList.add('hidden');
+                } else {
+                    // PHASE 2: 10-SECOND SHOW & TELL PRESENTATION WINDOW
+                    isSprintRunning = false;
+                    const showAndTellRemaining = Math.max(0, (showAndTellEndTime - now) / 1000);
+
+                    if (showAndTellRemaining > 0) {
+                        isShowAndTellActive = true;
+                        document.getElementById('timerLabel').innerHTML = `<i class="fa-solid fa-bullhorn mr-1 text-amber-400"></i> Show & Tell`;
+                        document.getElementById('timerDisplay').innerText = showAndTellRemaining.toFixed(1) + 's';
+                        document.getElementById('showAndTellCountdown').innerText = showAndTellRemaining.toFixed(1) + 's';
+                        
+                        // Show banner overlay while keeping drawing canvas clear & visible
+                        document.getElementById('showAndTellBanner').classList.remove('hidden');
+                        document.getElementById('timesUpOverlay').classList.add('hidden');
+                    } else {
+                        // PHASE 3: FINAL TIME'S UP OVERLAY
+                        isShowAndTellActive = false;
+                        clearInterval(timerInterval);
+                        document.getElementById('timerDisplay').innerText = '0.0s';
+                        document.getElementById('showAndTellBanner').classList.add('hidden');
+                        document.getElementById('timesUpOverlay').classList.remove('hidden');
+                    }
+                }
+            }, 100);
+        }
+
+        // CANVAS DRAWING LOGIC
         function startDraw(e) {
-            if (currentRole === 'gm' || (isTimerRunning && localTimeRemaining <= 0)) return;
+            if (currentRole === 'gm' || !isSprintRunning) return;
             isDrawing = true;
             lastPos = getPos(e);
         }
 
         function draw(e) {
-            if (!isDrawing || currentRole === 'gm' || (isTimerRunning && localTimeRemaining <= 0)) return;
+            if (!isDrawing || currentRole === 'gm' || !isSprintRunning) return;
             const currentPos = getPos(e);
-            
-            const stroke = {
-                x1: Math.round(lastPos.x),
-                y1: Math.round(lastPos.y),
-                x2: Math.round(currentPos.x),
-                y2: Math.round(currentPos.y),
+            const strokeData = {
+                x1: lastPos.x,
+                y1: lastPos.y,
+                x2: currentPos.x,
+                y2: currentPos.y,
                 color: document.getElementById('brushColor').value,
                 size: parseInt(document.getElementById('brushSize').value)
             };
 
-            // 1. Draw locally
-            drawStrokeOnCanvas(stroke);
+            // Draw locally immediately
+            drawStrokeOnCanvas(strokeData);
 
-            // 2. Broadcast stroke to GM live via MQTT
-            publishMqttMessage({ type: 'STROKE', stroke: stroke });
-
+            // Broadcast via MQTT
+            publishMQTT(`quarts/room/${currentRoom}/stroke`, strokeData);
             lastPos = currentPos;
         }
 
@@ -818,20 +723,55 @@
             };
         }
 
-        function playerClearCanvas() {
+        function triggerClearCanvas() {
             if (currentRole === 'gm') return;
-            clearCanvasLocal();
-            publishMqttMessage({ type: 'CLEAR_CANVAS' });
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGridLines();
+            publishMQTT(`quarts/room/${currentRoom}/clear`, { timestamp: Date.now() });
         }
 
-        /* --- 7. EVENT LISTENERS --- */
+        // SCORE CONTROLS
+        function adjustScore(delta) {
+            if (currentRole !== 'gm') return;
+            const newScore = Math.max(0, Math.min(9, approvedScore + delta));
+            publishMQTT(`quarts/room/${currentRoom}/score`, { score: newScore });
+        }
+
+        function updateScoreDisplay() {
+            document.getElementById('scoreDisplay').innerText = `${approvedScore} / 9`;
+
+            const minBox = document.getElementById('rewardMin');
+            const sweepBox = document.getElementById('rewardSweep');
+
+            if (approvedScore >= 5) {
+                minBox.className = "p-2 rounded border bg-emerald-950/60 border-emerald-500 text-emerald-200 font-bold flex items-center justify-between";
+            } else {
+                minBox.className = "p-2 rounded border bg-github-bg border-github-border text-github-muted flex items-center justify-between";
+            }
+
+            if (approvedScore === 9) {
+                sweepBox.className = "p-2 rounded border bg-amber-950/60 border-amber-500 text-amber-200 font-bold flex items-center justify-between";
+            } else {
+                sweepBox.className = "p-2 rounded border bg-github-bg border-github-border text-github-muted flex items-center justify-between";
+            }
+        }
+
+        function generateNewItems() {
+            if (currentRole !== 'gm') return;
+            const samplePool = ["Cat", "Sun", "House", "Car", "Tree", "Fish", "Book", "Glasses", "Guitar", "Hat", "Pizza", "Watch", "Moon", "Spoon", "Flower"];
+            const shuffled = samplePool.sort(() => 0.5 - Math.random());
+            const newItems = shuffled.slice(0, 9);
+            publishMQTT(`quarts/room/${currentRoom}/prompts`, { prompts: newItems });
+        }
+
+        // LISTENERS
         canvas.addEventListener('mousedown', startDraw);
         canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('mouseup', stopDraw);
         canvas.addEventListener('mouseleave', stopDraw);
 
-        canvas.addEventListener('touchstart', startDraw, { passive: true });
-        canvas.addEventListener('touchmove', draw, { passive: true });
+        canvas.addEventListener('touchstart', startDraw);
+        canvas.addEventListener('touchmove', draw);
         canvas.addEventListener('touchend', stopDraw);
 
         window.addEventListener('load', () => {
