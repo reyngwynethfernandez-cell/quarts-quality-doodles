@@ -426,15 +426,39 @@
                             </div>
                         </div>
 
-                        <!-- 9 Prompt Slots Callout Bar -->
-                        <div class="space-y-2">
-                            <div class="flex justify-between items-center">
-                                <label class="text-xs font-mono font-bold text-quartz-300 uppercase tracking-wider flex items-center gap-2">
-                                    <i class="fa-solid fa-dice text-quartz-400"></i> Game Master Callouts (Max 9 Items):
-                                </label>
-                                <button onclick="generateRandomPrompts()" class="text-xs text-quartz-400 hover:text-white underline">
-                                    <i class="fa-solid fa-shuffle mr-1"></i> Shuffle New Prompts
-                                </button>
+                        <!-- 9 Prompt Slots Callout Bar with GM Mode Switch -->
+                        <div class="space-y-3 bg-quartz-950/60 p-4 rounded-xl border border-quartz-500/30">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gh-border/60 pb-3">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs font-mono font-bold text-quartz-300 uppercase tracking-wider flex items-center gap-2">
+                                        <i class="fa-solid fa-dice text-quartz-400"></i> Game Master Callouts (9 Items):
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center space-x-3">
+                                    <!-- Blind Mode Toggle Switch -->
+                                    <button onclick="toggleGmMode()" id="gmModeBtn" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-quartz-900 text-quartz-300 border border-quartz-500/40 hover:bg-quartz-800">
+                                        <i class="fa-solid fa-eye-slash text-amber-400" id="gmModeIcon"></i>
+                                        <span id="gmModeText">Blind Mode: Active (Player View)</span>
+                                    </button>
+
+                                    <button onclick="generateRandomPrompts()" class="text-xs text-quartz-400 hover:text-white underline">
+                                        <i class="fa-solid fa-shuffle mr-1"></i> Shuffle Prompts
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Secret GM Callout Key Drawer (Visible when GM Mode is ON) -->
+                            <div id="gmSecretKeyDrawer" class="hidden p-3 bg-gradient-to-r from-amber-950/40 via-gh-card to-amber-950/40 rounded-lg border border-amber-500/40 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                                        <i class="fa-solid fa-user-ninja"></i> Secret Game Master Callout Key (Read Out loud):
+                                    </span>
+                                    <span class="text-[10px] text-amber-400/80 font-mono">Hidden from player screen!</span>
+                                </div>
+                                <div class="grid grid-cols-3 sm:grid-cols-9 gap-1.5 text-center font-mono text-xs" id="gmSecretItemsList">
+                                    <!-- Dynamic text inserted via JS -->
+                                </div>
                             </div>
                             
                             <div class="grid grid-cols-3 sm:grid-cols-9 gap-1.5" id="promptsContainer">
@@ -629,6 +653,7 @@
         ];
 
         let currentPrompts = [];
+        let isGmMode = false; // Default: Blind Mode (Player View)
         let score = 0;
         let timerSeconds = 30.0;
         let timerInterval = null;
@@ -809,26 +834,76 @@
             document.getElementById('timesUpOverlay').classList.remove('flex');
         }
 
+        // --- Game Master Mode / Blind Toggle ---
+        function toggleGmMode() {
+            isGmMode = !isGmMode;
+            const gmModeText = document.getElementById('gmModeText');
+            const gmModeIcon = document.getElementById('gmModeIcon');
+            const gmModeBtn = document.getElementById('gmModeBtn');
+            const gmSecretKeyDrawer = document.getElementById('gmSecretKeyDrawer');
+
+            if (isGmMode) {
+                gmModeText.innerText = "Game Master View: Unmasked";
+                gmModeIcon.className = "fa-solid fa-eye text-cyan-400";
+                gmModeBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-amber-950 text-amber-300 border border-amber-500/50 shadow-md";
+                gmSecretKeyDrawer.classList.remove('hidden');
+            } else {
+                gmModeText.innerText = "Blind Mode: Active (Player View)";
+                gmModeIcon.className = "fa-solid fa-eye-slash text-amber-400";
+                gmModeBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-quartz-900 text-quartz-300 border border-quartz-500/40 hover:bg-quartz-800";
+                gmSecretKeyDrawer.classList.add('hidden');
+            }
+
+            renderPrompts();
+        }
+
         // --- Prompts & Verification Logic ---
         function generateRandomPrompts() {
             // Shuffle and pick 9
             const shuffled = [...everydayObjects].sort(() => 0.5 - Math.random());
             currentPrompts = shuffled.slice(0, 9);
 
+            renderPrompts();
+            renderApprovalCheckboxes();
+        }
+
+        function renderPrompts() {
             const container = document.getElementById('promptsContainer');
+            const secretList = document.getElementById('gmSecretItemsList');
             container.innerHTML = '';
+            secretList.innerHTML = '';
 
             currentPrompts.forEach((item, index) => {
+                // Secret list for GM callouts
+                const secretBadge = document.createElement('div');
+                secretBadge.className = 'bg-amber-950/80 border border-amber-500/40 p-1.5 rounded text-amber-200 font-bold';
+                secretBadge.innerText = `${index + 1}. ${item}`;
+                secretList.appendChild(secretBadge);
+
+                // Main Display Slot Card
                 const badge = document.createElement('div');
-                badge.className = 'bg-gh-bg border border-quartz-500/30 p-2 rounded text-center space-y-0.5 shadow';
-                badge.innerHTML = `
-                    <div class="text-[9px] font-mono text-quartz-400 font-bold">#${index + 1}</div>
-                    <div class="text-xs font-extrabold text-white truncate">${item}</div>
-                `;
+                
+                if (isGmMode) {
+                    // Game Master View: Unmasked
+                    badge.className = 'bg-quartz-900/90 border border-cyan-400/50 p-2 rounded text-center space-y-0.5 shadow-md';
+                    badge.innerHTML = `
+                        <div class="text-[9px] font-mono text-cyan-300 font-bold">Slot #${index + 1}</div>
+                        <div class="text-xs font-extrabold text-white truncate">${item}</div>
+                    `;
+                } else {
+                    // Blind Player View: Obscured/Shielded
+                    badge.className = 'bg-gh-bg border border-quartz-500/20 p-2 rounded text-center space-y-0.5 shadow relative overflow-hidden group';
+                    badge.innerHTML = `
+                        <div class="text-[9px] font-mono text-quartz-400 font-bold">Slot #${index + 1}</div>
+                        <div class="text-[11px] font-semibold text-slate-500 flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-gem text-quartz-400/60 text-[10px]"></i>
+                            <span>Listen to Call</span>
+                        </div>
+                    `;
+                }
+
                 container.appendChild(badge);
             });
-
-            renderApprovalCheckboxes();
         }
 
         function renderApprovalCheckboxes() {
