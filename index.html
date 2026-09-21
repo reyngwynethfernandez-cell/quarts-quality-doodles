@@ -242,15 +242,15 @@
                     
                     <!-- PERFECT 3x3 OVERLAY BADGES FOR CELL IDENTIFICATION -->
                     <div class="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none z-10">
-                        <div class="border border-quartz-deep/30 p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#1</span></div>
-                        <div class="border border-quartz-deep/30 p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#2</span></div>
-                        <div class="border border-quartz-deep/30 p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#3</span></div>
-                        <div class="border border-quartz-deep/30 p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#4</span></div>
-                        <div class="border border-quartz-deep/30 p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#5</span></div>
-                        <div class="border border-quartz-deep/30 p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#6</span></div>
-                        <div class="border border-quartz-deep/30 p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#7</span></div>
-                        <div class="border border-quartz-deep/30 p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#8</span></div>
-                        <div class="border border-quartz-deep/30 p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#9</span></div>
+                        <div class="p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#1</span></div>
+                        <div class="p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#2</span></div>
+                        <div class="p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#3</span></div>
+                        <div class="p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#4</span></div>
+                        <div class="p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#5</span></div>
+                        <div class="p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#6</span></div>
+                        <div class="p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#7</span></div>
+                        <div class="p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#8</span></div>
+                        <div class="p-1 flex items-start justify-start"><span class="text-[10px] font-mono text-quartz-glow/60 font-bold bg-github-bg/70 px-1 rounded">#9</span></div>
                     </div>
 
                     <!-- SHOW & TELL 10-SECOND BANNER OVERLAY -->
@@ -425,18 +425,21 @@
         function drawGridLines() {
             ctx.strokeStyle = '#0284c7';
             ctx.lineWidth = 2;
-            const w = canvas.width / 3;
-            const h = canvas.height / 3;
+            const cellW = canvas.width / 3;
+            const cellH = canvas.height / 3;
 
+            // Draw 2 Vertical lines & 2 Horizontal lines to form 9 perfect cells
             for (let i = 1; i < 3; i++) {
+                // Vertical grid lines
                 ctx.beginPath();
-                ctx.moveTo(w * i, 0);
-                ctx.lineTo(canvas.width, h * i);
+                ctx.moveTo(cellW * i, 0);
+                ctx.lineTo(cellW * i, canvas.height);
                 ctx.stroke();
 
+                // Horizontal grid lines
                 ctx.beginPath();
-                ctx.moveTo(0, h * i);
-                ctx.lineTo(canvas.width, h * i);
+                ctx.moveTo(0, cellH * i);
+                ctx.lineTo(canvas.width, cellH * i);
                 ctx.stroke();
             }
         }
